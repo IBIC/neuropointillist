@@ -1,0 +1,2 @@
+fmri/RC4101_A_func2std.nii.gz
+fmri/RC4103_A_func2std.nii.gz

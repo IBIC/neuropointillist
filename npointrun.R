@@ -1,0 +1,83 @@
+
+require(Rniftilib)
+require(argparse)
+require(doParallel)
+
+library(Rniftilib)
+library(argparse)
+library(doParallel)
+
+# Source helper functions
+source("/mnt/adrc/tara/flournoy/helper.R")
+
+parser <- ArgumentParser()
+
+parser$add_argument("-m", "--mask",  nargs=1, help="Maskfile to process", required=TRUE)
+parser$add_argument("-d", "--designmat",  nargs=1, help="Design matrix in RDS format", required=TRUE)
+
+parser$add_argument("--model", nargs=1, help="R code that defines the voxelwise-model and any initialization", required=TRUE)
+
+#cmdargs <- c("-m", "fl.0078.nii.gz", "--model", "model.R", "-d", "designmat.rds")
+
+                                        #args <- parser$parse_args(cmdargs)
+args <- parser$parse_args()
+
+
+###############################################################################
+#### Check for mask and read it. It is mandatory and must exist.
+maskfile <- args$mask
+tryCatch({
+    mask <- nifti.image.read(maskfile);
+}, error=function(e) {
+    cat("Could not read mask file: ", maskfile, "\n")
+    stop(e)
+})
+
+# reduce to vector and obtain list of nonzero vertices
+mask.vector <- as.vector(mask[,,])
+mask.vertices <- which(mask.vector > 0)
+nvertices <- length(mask.vertices)
+
+
+###############################################################################
+#### read model code
+if (!is.null(args$model)) {
+    modelfile <- args$model
+    if (!file.exists(modelfile)) {
+        stop("model file ", modelfile, " does not exist!")
+    }
+    result <- tryCatch({
+        source(modelfile)
+    }, error=function(e) {
+        cat("There were errors in the model file: ", modelfile, "\n")
+        stop(e)
+
+    })
+}
+
+###############################################################################
+#### Read in rds data
+designmat <- readRDS(args$designmat)
+attach(designmat)
+
+voxelfile <- gsub(".nii.gz", ".rds", args$mask)
+voxeldat <- readRDS(voxelfile)
+
+stopifnot(dim(voxeldat)[1] == dim(designmat)[1])
+
+###############################################################################
+#### Do the processing
+
+cat("Starting sequential job\n")
+system.time(results <-sapply(1:nvertices, processVoxel))
+
+prefix <- gsub(".nii.gz","", args$mask)
+
+writeOutputFiles(prefix,results,mask)
+
+
+        
+                
+
+
+

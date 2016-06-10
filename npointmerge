@@ -1,0 +1,10 @@
+#!/bin/bash 
+# merge some number of files by summing them
+output=$1
+shift
+cp $1 $output
+shift
+for i in $*
+do
+fslmaths $output -add $i $output
+done
