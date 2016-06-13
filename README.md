@@ -1,5 +1,5 @@
 # neuropointillist
-Flexible modeling of neuroimaging data in R
+Flexible modeling of neuroimaging data in R, point by point
 
 ##Usage
 `npointillist --set1 listoffiles1.txt --setlabels1 file1.csv --set2 listoffiles2.txt  --setlabels2 file2.csv`
@@ -47,7 +47,7 @@ Practically, I recommend running using SGE parallelism to give yourself the wide
 
 The `readargs.R` file in `example.rawfmri` is configured so that it will create a directory called `sgetest` with the assembled design matrix file (in rds format), the split up fMRI data (also in rds format), and files to run the job. These files are:
 
-`Makefile` This file contains the rules for running each subjob and assembling the results. Note that the executables `npointrun` and `npointmerge` must be in your path environment. You can run your job by typing `make -j <ncores>` at the command line in the `sgetest` directory. You can also type `make clean` to remove all the intermediate files once your job has completed and you have reassembled your output (by any method).
+`Makefile` This file contains the rules for running each subjob and assembling the results. Note that the executables `npointrun` and `npointmerge` must be in your path environment. You can run your job by typing `make -j <ncores>` at the command line in the `sgetest` directory. You can also type `make mostlyclean` to remove all the intermediate files once your job has completed and you have reassembled your output (by any method). If instead you type `make clean`, you can remove all the rds files also. 
 
 
 `sgejob.bash` This is the job submission script for processing the data using SGE. Note that `npointrun` needs to be in your path. 

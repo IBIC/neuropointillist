@@ -1,5 +1,5 @@
-# This model, a modified version of model2 written by John Flournoy,
-# is modified so that errors are appropriately trapped and handled when running
+# This model is written so that errors are appropriately trapped and
+#handled when running
 # using a shared memory multiprocessor
 library(nlme)
 

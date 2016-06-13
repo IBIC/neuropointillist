@@ -258,7 +258,7 @@ writeMakefile <- function(prefix, resultnames, modelfile, designmat, makefile) {
     allrules <- c()
     mostlyclean <- "mostlyclean:\n\trm -f "
 
-    clean <- "clean:\n\trm -f *.rds $(masks)"     
+    clean <- "clean: mostlyclean\n\trm -f *.rds $(masks) npoint.e* npoint.o*"     
     
     for (i in resultnames) {
         alltarget <- c(alltarget, paste("$(PREFIX)", i, ".nii.gz" , sep=""))
@@ -277,7 +277,7 @@ writeMakefile <- function(prefix, resultnames, modelfile, designmat, makefile) {
                  "\n",
                  paste(alltarget,collapse=" "),
                  "\n",
-                 "%$(OUTPUT): %.nii.gz\n\tRscript ../npointrun.R -m $< --model $(MODEL) -d $(DESIGNMAT)",
+                 "%$(OUTPUT): %.nii.gz\n\tnpointrun -m $< --model $(MODEL) -d $(DESIGNMAT)",
                  "\n",
                  allrules,
                  "\n",
@@ -338,6 +338,7 @@ writeSGEsubmitscript <- function(prefix, resultnames, modelfile, designmat,maste
                  paste("MODEL=",modelfile,sep=""),
                  paste("DESIGNMAT=",designmat,sep=""),
                  "num=$(printf \"%04d\" $SGE_TASK_ID)",
+                 paste("npointrun -m ", basename(prefix), "${num}.nii.gz --model ${MODEL} -d ${DESIGNMAT}",sep=""),
                  "\n"),
                fileConnJob)
     Sys.chmod(masterscript, "775")
