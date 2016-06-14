@@ -11,7 +11,7 @@ _Right now the code is unpackaged. However, I am working on packaging it and whe
 File inputs that are supported are nifti files. _Cifti, and mgz files will be supported in the future.  Alternatively, the user should also be able to supply a CSV file with the data in it, for other types of neuroimaging analysis that might not conform to this model._ The file type is determined simply by the extension (.nii = cifti, .nii.gz = nifti, .mgz is vertex surface). 
 
 `--set1`, `--set2`, ..`--set5`
- By default, the command line variant of the program supports up to 5 input sets. If more than five files are necessary one should use the programmatic interface. Each setfile (`listoffiles1.text ... listoffiles2.txt`) is a text file that contains the filenames in each set, one per row. These sets can correspond to longitudinal data points. They do not have to have the same subjects in each set (i.e., there can be missing data if the models you intend to use support that). **At least one set and setlabel must be provided **
+ By default, the command line variant of the program supports up to 5 input sets. If more than five files are necessary one should use the programmatic interface. Each setfile (`listoffiles1.text ... listoffiles2.txt`) is a text file that contains the filenames in each set, one per row. These sets can correspond to longitudinal data points. They do not have to have the same subjects in each set (i.e., there can be missing data if the models you intend to use support that). **At least one set and corresponding setlabel must be provided **
  
  `--setlabels1`, `--setlabels2`, ..`setlabels5`
  
@@ -38,10 +38,21 @@ The setlabel files are csv files that specify variables that correspond to the f
 
 `--debug debugfile` Write out external representations of the design matrix and the fMRI data to the file `debugfile`. This may be useful for development and testing of your model, or troubleshooting problems with the setfiles or covariate files.
 
-## General considerations for running in parallel
+## Writing the processVoxel function
+This function takes a single value `v` which is a numeric index for a voxel. The code should also load any libraries that you need to support your model (e.g., `nlme`). Before calling `processVoxel`, the code will have attached to the design matrix, so that you have access to all of the named columns in this matrix. Note that we attach to minimize memory copies that might be necessary when running in multicore mode.
+
+After you run your model, you should create and return a `list` structure in `R` that contains the values that you want to write out as files. Single scalar values will be combined and reassembled as three-dimensional files, and lists of values (e.g., random effects) will be reassembled as four-dimensional files.
+
+## IMPORTANT: General considerations for running in parallel 
 You will be doing the same thing over a lot of voxels in some kind of loop. If your model generates an error, you will lose the entire job. Therefore, you want to be proactive about trapping errors of all types. Specifically, multicore parallelism is a little touchier with respect to error handling than running in a loop, so it is entirely possible that a code that runs correctly for SGE parallelism does not run on a multicore.
 
-Practically, I recommend running using SGE parallelism to give yourself the widest range of opportunities to complete your job using limited resources. 
+Depending on what package you are using in your model and how it is compiled, you may find that the package or underlying libraries themselves are multi-threaded. This will be obvious if you run `top` while executing your model on a multi-core machine. If things are working well, the `R` processes should show up as using up to 100% of the CPU. If your parallelism is fighting with multithreading, you will see your processes using _over_ 100% of the CPU. This is not a good thing! It means that two levels of parallelism are fighting with each other for resources. When they do this, you might find that jobs take many times longer than they should, or worse, never complete.
+
+You will need to figure out how to turn off any underlying parallelism. For the `nlme` library you should set the environment variable `OMP_NUM_THREADS=1` in your shell. Setting this variable in the R script did not work (although it might be that if I do so before loading the nlme library it would work). However, other libraries may have other environment variables that should be manipulated.
+
+Practically, I recommend running using SGE parallelism to give
+yourself the widest range of opportunities to complete your job using
+limited resources.
 
 ## Running a model using SGE parallelism 
 
