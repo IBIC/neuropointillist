@@ -1,4 +1,3 @@
-
 #### Check that for each set of files provided, there is a matching
 #### covariate file
 checkSetLabels <- function(set, setlabels) {
@@ -30,7 +29,6 @@ checkArguments <- function(args) {
     
 #### Read the files that are in each data set and put them into the
 #### args structure
-
 readSetFiles <- function(args) {
     if (!is.null(args$set1)) {
         filelist <- read.table(args$set1,stringsAsFactors=FALSE)
@@ -56,9 +54,16 @@ readSetFiles <- function(args) {
 }
 
 
-#### Read in data sets.
-#### Return the design matrix and a data frame with the selected vertices 
-readDataSets <- function(args, numberdatasets, mask.vertices) {
+#' Read in neuroimaging data from argument structure
+#'
+#' This function takes an argument structure that specifies all the parameters
+#' that should be input to npointillist and returns an array of voxel data and
+#' a covariate matrix.
+#' @param args Arguments for neuropointillist
+#' @param numberdatasets The number of data sets specified in args
+#' @param mask.vertices A vector of vertices used to determine what vertices to read
+#' npointReadDataSets()
+npointReadDataSets <- function(args, numberdatasets, mask.vertices) {
     alldat <- c()
     covariates <- c()
     dataset<-1
@@ -196,8 +201,17 @@ writeFile <- function(mask, vertexdata,outputfilename) {
         
 }
 
-#### Write output files. This writes out the output statistic files.
-writeOutputFiles <- function(prefix, results, mask) {
+
+#' Write the output statistic files
+#'
+#' This function takes an argument structure that specifies all the parameters
+#' that should be input to npointillist and returns an array of voxel data and
+#' a covariate matrix.
+#' @param prefix Prefix for output, to be prepended to outputs
+#' @param results A vector of lists returned from the processVoxel function
+#' @param mask A mask that corresponds to the output results
+#' npointWriteOutputFiles()
+#' npointWriteOutputFiles <- function(prefix, results, mask) {
    # make sure that any directory specified by prefix exists
     dir <- dirname(prefix)
     if (!dir.exists(dir)) {
@@ -246,7 +260,16 @@ splitDataSize <- function(size, prefix,mask) {
 }
 
 
-writeMakefile <- function(prefix, resultnames, modelfile, designmat, makefile) {
+#' Write an output makefile
+#'
+#' Generate a makefile for the given workflow
+#' @param prefix Prefix for output, to be prepended to outputs
+#' @param resultnames List of names for the expected outputs
+#' @param modelfile Name of the model file that contains the processVoxel command
+#' @param designmat Design matrix
+#' @param makefile Name of makefile
+#' npointWriteMakefile()
+npointWriteMakefile <- function(prefix, resultnames, modelfile, designmat, makefile) {
     dir <- dirname(prefix)
     if (!dir.exists(dir)) {
         dir.create(dir, recursive=TRUE)
@@ -309,7 +332,18 @@ mergeDesignmatWithCovariates <- function(desigmat, covariatefile) {
 return(merged)
 }
 
-writeSGEsubmitscript <- function(prefix, resultnames, modelfile, designmat,masterscript,jobscript,njobs) {
+#' Write an output SGE submit script
+#'
+#' Generate an SGE submit script for the given workflow
+#' @param prefix Prefix for output, to be prepended to outputs
+#' @param resultnames List of names for the expected outputs
+#' @param modelfile Name of the model file that contains the processVoxel command
+#' @param designmat Design matrix
+#' @param masterscript Name of the master submit script
+#' @param jobscript Name of the job submission script
+#' @param njobs Number of jobs to submit
+#' npointWriteSGEsubmitscript()
+npointWriteSGEsubmitscript <- function(prefix, resultnames, modelfile, designmat,masterscript,jobscript,njobs) {
     dir <- dirname(prefix)
     if (!dir.exists(dir)) {
         dir.create(dir, recursive=TRUE)
