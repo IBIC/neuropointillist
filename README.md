@@ -1,12 +1,36 @@
 # neuropointillist
 Flexible modeling of neuroimaging data in R, point by point
 
-##Usage
+#Overview
+
+This project contains an in-development R package (called
+`neuropointillist`) which defines functions to help combine multiple
+sets of neuroimaging data, run arbitrary R code (a "model") on each
+voxel in parallel, output results, and reassemble the data. Included
+are three standalone programs. `npointillist` and `npointrun` use the
+`neuropointillist` package, and `npointmerge` uses FSL commands to
+reassemble results.
+
+#Installation
+
+You will need the R packages `Rniftilib`, `argparse`, and `doParallel` to be installed. In addition, to locally install the development `neuropointillist` R library, you will need the R packages `devtools`. If you are actually doing development, you should also install the R package `roxygen2`.
+
+`devtools` depends on the Debian package `libcurl4-openssl-dev`, so you might need a system administrator to make sure that is installed.
+
+Instructions for installing Rniftilib may be found [here.](http://r-forge.r-project.org/R/?group_id=427)
+
+Once all prerequisites are installed and you have pulled the `neuropointillist` repository, locally install the package. To do this, `cd` into the repository. You will have a `neuropointillist` subdirectory. Start `R` and type
+
+``` R
+install.packages("neuropointillist")
+```
+Make sure that the repository directory which contains the R scripts `npointillist` and `npointrun` is in your path.
+
+# npointillist
+## Usage
 `npointillist --set1 listoffiles1.txt --setlabels1 file1.csv --set2 listoffiles2.txt  --setlabels2 file2.csv`
 `--covariates covariatefile.csv  --mask mask.nii.gz --model code.R  [ -p N | --sgeN N] --output output`
 `--debugfile outputfile `
-
-_Right now the code is unpackaged. However, I am working on packaging it and when that is complete it will be possible to use standalone R scripts OR to write your own R package and call the R routines_
 
 File inputs that are supported are nifti files. _Cifti, and mgz files will be supported in the future.  Alternatively, the user should also be able to supply a CSV file with the data in it, for other types of neuroimaging analysis that might not conform to this model._ The file type is determined simply by the extension (.nii = cifti, .nii.gz = nifti, .mgz is vertex surface). 
 
@@ -52,7 +76,11 @@ You will need to figure out how to turn off any underlying parallelism. For the 
 
 Practically, I recommend running using SGE parallelism to give
 yourself the widest range of opportunities to complete your job using
-limited resources.
+limited resources. If you do that, you can use `make` on a multicore
+machine, you can use any SGE that you like, and you can even copy
+files to multiple computers and run subsets of the job on different
+machines.
+
 
 ## Running a model using SGE parallelism 
 
@@ -61,7 +89,7 @@ The `readargs.R` file in `example.rawfmri` is configured so that it will create 
 `Makefile` This file contains the rules for running each subjob and assembling the results. Note that the executables `npointrun` and `npointmerge` must be in your path environment. You can run your job by typing `make -j <ncores>` at the command line in the `sgetest` directory. You can also type `make mostlyclean` to remove all the intermediate files once your job has completed and you have reassembled your output (by any method). If instead you type `make clean`, you can remove all the rds files also. 
 
 
-`sgejob.bash` This is the job submission script for processing the data using SGE. Note that `npointrun` needs to be in your path. 
+`sgejob.bash` This is the job submission script for processing the data using SGE. Note that `npointrun` needs to be in your path. The commands in the job submission script are bash commands.
 
 `runme` This script will submit the job to the SGE and call Make to merge the resulting files when the job has completed. It is an SGE/Make hybrid.
 
@@ -91,3 +119,22 @@ Control(returnObject=TRUE,singular.ok=TRUE)))
     retvals
 }
 ```
+
+# npointrun
+Run a model on a single data set sequentially, without data splitting
+
+##Usage
+`npointrun --mask mask.nii.gz --model code.R  --designmat designmat.rds`
+
+`--mask mask.nii.gz` Nonzero mask voxels must indicate locations of the data in the corresponding RDS file.  The name of the mask is used to obtain the name of the RDS data file (substituting .nii.gz for .rds). (**required**)
+
+`--model code.R` The model specifies the R template code to run the model and return results. The model must define the function `processVoxel(v)` that takes as an argument a voxel number `v`. (**required**)
+
+`--designmat designmat.rds` The design matrix must be the same dimensions as the voxeldat, read from the RDS file. (**required**)
+
+
+# npointmerge
+Merge some number of files by summing them
+
+## Usage
+`npointrun output <list of files>`
