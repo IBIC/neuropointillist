@@ -1,4 +1,3 @@
-# neuropointillist
 Flexible modeling of neuroimaging data in R, point by point
 
 #Overview
@@ -17,12 +16,12 @@ You will need the R packages `Rniftilib`, `argparse`, and `doParallel` to be ins
 
 `devtools` depends on the Debian package `libcurl4-openssl-dev`, so you might need a system administrator to make sure that is installed.
 
-Instructions for installing Rniftilib may be found [here.](http://r-forge.r-project.org/R/?group_id=427)
+**Instructions for installing `Rniftilib` may be found [here.](http://r-forge.r-project.org/R/?group_id=427)**
 
 Once all prerequisites are installed and you have pulled the `neuropointillist` repository, locally install the package. To do this, `cd` into the repository. You will have a `neuropointillist` subdirectory. Start `R` and type
 
 ``` R
-install.packages("neuropointillist")
+install.packages("neuropointillist", repos=NULL, type="source")
 ```
 Make sure that the repository directory which contains the R scripts `npointillist` and `npointrun` is in your path.
 
