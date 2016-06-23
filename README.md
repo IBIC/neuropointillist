@@ -23,6 +23,13 @@ Once all prerequisites are installed and you have pulled the `neuropointillist` 
 ``` R
 install.packages("neuropointillist", repos=NULL, type="source")
 ```
+
+or 
+
+``` R
+install("neuropointillist")
+```
+
 Make sure that the repository directory which contains the R scripts `npointillist` and `npointrun` is in your path.
 
 # npointillist
@@ -36,9 +43,9 @@ File inputs that are supported are nifti files. _Cifti, and mgz files will be su
 `--set1`, `--set2`, ..`--set5`
  By default, the command line variant of the program supports up to 5 input sets. If more than five files are necessary one should use the programmatic interface. Each setfile (`listoffiles1.text ... listoffiles2.txt`) is a text file that contains the filenames in each set, one per row. These sets can correspond to longitudinal data points. They do not have to have the same subjects in each set (i.e., there can be missing data if the models you intend to use support that). **At least one set and corresponding setlabel must be provided **
  
- `--setlabels1`, `--setlabels2`, ..`setlabels5`
+ `--setlabels1`, `--setlabels2`, ... `setlabels5`
  
-The setlabel files are csv files that specify variables that correspond to the files in the sets provided above. There must be exactly the same number of setlabel files as sets. If the MRI data files in each set are three dimensional, the list of files in the set  should have exactly the same number of entries as the corresponding label csv file.  If the files are four dimensional (fMRI data), the corresponding label csv files should include one entry per volume (e.g., the TR). The data from the setlabels must be provided in the same order as the data in the set files. Normally, set label files will include (at the least) an id number and a time point for each 3D file that is specified. For 4D files, set label files will probably include an id number, time point, TR and elements of the fMRI design matrix. The headers of the setlabel files must be consistent across sets, and consistent with headers in the covariate file, if specified, below. **At least one set and setlabel must be provided **
+The setlabel files are csv files that specify variables that correspond to the files in the sets provided above. There must be exactly the same number of setlabel files as sets. If the MRI data files in each set are three dimensional, the list of files in the set  should have exactly the same number of entries as the corresponding label csv file.  If the files are four dimensional (fMRI data), the corresponding label csv files should include one entry per volume (e.g., the TR). The data from the setlabels must be provided in the same order as the data in the set files. Normally, set label files will include (at the least) an id number and a time point for each 3D file that is specified. For 4D files, set label files will probably include an id number, time point, TR and elements of the fMRI design matrix. The headers of the setlabel files must be consistent across sets, and consistent with headers in the covariate file, if specified, below. **At least one set and setlabel must be provided.**
 
 `--covariates`  Subject identifiers can be associated with any number of covariates as specified in the covariate file, which are csv files. These files can contain additional information about subjects, for example, age at a particular time or IQ. All information in covariate files can also be specified in the setlablels; this option is largely a convenience option. If a covariate file is specified, it will be merged with the content of the setlabel files based on all the header fields that are common to both. An error will occur if there are no header fields in common. 
 
@@ -71,7 +78,7 @@ You will be doing the same thing over a lot of voxels in some kind of loop. If y
 
 Depending on what package you are using in your model and how it is compiled, you may find that the package or underlying libraries themselves are multi-threaded. This will be obvious if you run `top` while executing your model on a multi-core machine. If things are working well, the `R` processes should show up as using up to 100% of the CPU. If your parallelism is fighting with multithreading, you will see your processes using _over_ 100% of the CPU. This is not a good thing! It means that two levels of parallelism are fighting with each other for resources. When they do this, you might find that jobs take many times longer than they should, or worse, never complete.
 
-You will need to figure out how to turn off any underlying parallelism. For the `nlme` library you should set the environment variable `OMP_NUM_THREADS=1` in your shell. Setting this variable in the R script did not work (although it might be that if I do so before loading the nlme library it would work). However, other libraries may have other environment variables that should be manipulated.
+You will need to figure out how to turn off any underlying parallelism. For the `nlme` library you should set the environment variable `OMP_NUM_THREADS=1` in your shell. Setting this variable in the R script did not work (although it might be that if I do so before loading the `nlme` library it would work). However, other libraries may have other environment variables that should be manipulated.
 
 Practically, I recommend running using SGE parallelism to give
 yourself the widest range of opportunities to complete your job using

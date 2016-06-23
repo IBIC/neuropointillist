@@ -9,7 +9,8 @@ library(argparse)
 library(doParallel)
 
 # Source helper functions
-library(neuropointillist)
+install("neuropointillist")
+#library(neuropointillist)
 
 parser <- ArgumentParser()
 
