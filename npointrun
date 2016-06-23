@@ -9,7 +9,7 @@ library(argparse)
 library(doParallel)
 
 # Source helper functions
-source("/mnt/adrc/tara/flournoy/helper.R")
+library(neuropointillist)
 
 parser <- ArgumentParser()
 
@@ -56,6 +56,11 @@ if (!is.null(args$model)) {
     })
 }
 
+if( ! exists('processVoxel')) {
+    stop("The model file did not define the processVoxel function")
+}
+
+
 ###############################################################################
 #### Read in rds data
 designmat <- readRDS(args$designmat)
@@ -66,6 +71,9 @@ voxeldat <- readRDS(voxelfile)
 
 stopifnot(dim(voxeldat)[1] == dim(designmat)[1])
 
+
+
+
 ###############################################################################
 #### Do the processing
 
@@ -74,7 +82,7 @@ system.time(results <-sapply(1:nvertices, processVoxel))
 
 prefix <- gsub(".nii.gz","", args$mask)
 
-writeOutputFiles(prefix,results,mask)
+npointWriteOutputFiles(prefix,results,mask)
 
 
         
