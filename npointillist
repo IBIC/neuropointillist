@@ -8,10 +8,8 @@ library(Rniftilib)
 library(argparse)
 library(doParallel)
 
-getwd()
-quit()
-
-install.packages("neuropointillist", repos=NULL, type="source")
+#install.packages("../neuropointillist", repos=NULL, type="source")
+library(neuropointillist)
 
 parser <- ArgumentParser()
 parser$add_argument("-m", "--mask", nargs=1,type="character", help="Mask limiting the voxels that will be analyzed",required=TRUE)
