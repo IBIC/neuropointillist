@@ -1,5 +1,7 @@
 Flexible modeling of neuroimaging data in R, point by point
 
+![Neuropointillist logo](https://github.com/IBIC/neuropointillist/blob/master/logo.jpg)
+
 #Overview
 
 This project contains an in-development R package (called
