@@ -23,7 +23,7 @@ npointWriteSGEsubmitscript <- function(prefix, resultnames, modelfile, designmat
     fileConnJob <- file(jobscript)
     writeLines(c("#!/bin/bash",
                  "# This script will submit jobs to SGE. You can also run this job by typing make.",
-                 paste("qsub -S /bin/bash --sync y", basename(jobscript)),
+                 paste("qsub -S /bin/bash -sync y", basename(jobscript)),
                  "make"),
                fileConnMaster)
 
