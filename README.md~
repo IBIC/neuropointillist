@@ -145,4 +145,4 @@ Run a model on a single data set sequentially, without data splitting
 Merge some number of files by summing them
 
 ## Usage
-`npointmerge output <list of files>`
+`npointrun output <list of files>`

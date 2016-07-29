@@ -1135,4 +1135,4 @@ Control(returnObject=TRUE,singular.ok=TRUE)))
 <h1 id="npointmerge"><a name="user-content-npointmerge" href="#npointmerge" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>npointmerge</h1>
 <p>Merge some number of files by summing them</p>
 <h2 id="usage_2"><a name="user-content-usage_2" href="#usage_2" class="headeranchor-link" aria-hidden="true"><span class="headeranchor"></span></a>Usage</h2>
-<p><code>npointmerge output &lt;list of files&gt;</code></p></article></body></html>
+<p><code>npointrun output &lt;list of files&gt;</code></p></article></body></html>
