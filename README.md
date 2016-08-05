@@ -31,6 +31,7 @@ or
 ``` R
 install("neuropointillist")
 ```
+**! Note that `neuropointillist` requires R version >= 3.2.3**
 
 Make sure that the repository directory which contains the R scripts `npointillist` and `npointrun` is in your path.
 
