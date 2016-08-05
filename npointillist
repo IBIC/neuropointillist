@@ -1,44 +1,48 @@
 #!/usr/bin/env Rscript
 
-require(Rniftilib)
-require(argparse)
-require(doParallel)
+#### Make sure packages are installed and load them 
 
-library(Rniftilib)
-library(argparse)
-library(doParallel)
+if (!suppressWarnings(suppressPackageStartupMessages(require(Rniftilib)))) install.packages("Rniftilib", repos="http://R-Forge.R-project.org")
+if (!suppressWarnings(suppressPackageStartupMessages(require(argparse)))) install.packages("argparse")
+if (!suppressWarnings(suppressPackageStartupMessages(require(doParallel)))) install.packages("doParallel")
+suppressWarnings(suppressPackageStartupMessages(library(Rniftilib)))
+suppressWarnings(suppressPackageStartupMessages(library(argparse)))
+suppressWarnings(suppressPackageStartupMessages(library(doParallel)))
+suppressWarnings(suppressPackageStartupMessages(library(neuropointillist)))
 
-#install.packages("../neuropointillist", repos=NULL, type="source")
-library(neuropointillist)
+#### Take in command line arguments 
 
-parser <- ArgumentParser()
-parser$add_argument("-m", "--mask", nargs=1,type="character", help="Mask limiting the voxels that will be analyzed",required=TRUE)
-parser$add_argument( "--set1", nargs=1,  help="List of files at first occasion")
-parser$add_argument( "--set2", nargs=1, help="List of files at second occasion")
+parser <- ArgumentParser(description="This program prepares your data for modeling")
+
+parser$add_argument("-m", "--mask", nargs=1, type="character", help="Mask limiting the voxels that will be analyzed", required=TRUE)
+parser$add_argument("--set1", nargs=1,  help="List of files at first occasion")
+parser$add_argument("--set2", nargs=1, help="List of files at second occasion")
 parser$add_argument("--set3", nargs=1, help="List of files at third occasion")
 parser$add_argument("--set4", nargs=1, help="List of files at fourth occasion")
 parser$add_argument("--set5", nargs=1, help="List of files at fifth occasion")
-
-parser$add_argument("--setlabels1",  nargs=1, help="Covariates for files at first occasion")
-parser$add_argument("--setlabels2",  nargs=1, help="Covariates for files at second occasion")
-parser$add_argument("--setlabels3",  nargs=1, help="Covariates for files at third occasion")
-parser$add_argument("--setlabels4",   nargs=1,help="Covariates for files at fourth occasion")
-parser$add_argument("--setlabels5",   nargs=1, help="Covariates for files at fifth occasion")
-
+parser$add_argument("--setlabels1", nargs=1, help="Covariates for files at first occasion")
+parser$add_argument("--setlabels2", nargs=1, help="Covariates for files at second occasion")
+parser$add_argument("--setlabels3", nargs=1, help="Covariates for files at third occasion")
+parser$add_argument("--setlabels4", nargs=1,help="Covariates for files at fourth occasion")
+parser$add_argument("--setlabels5", nargs=1, help="Covariates for files at fifth occasion")
 parser$add_argument("--model", nargs=1, help="R code that defines the voxelwise-model and any initialization", required=TRUE)
-parser$add_argument("--covariates", nargs=1,type="character", help="Covariates that will be merged with the design matrix")
-parser$add_argument("--output", nargs=1,type="character", help="Output prefix to prepend to output files")
-parser$add_argument("--debugfile", nargs=1,type="character", help="Save voxeldat and designmat objects to this file to develop, test and debug the processVoxel function")
-
+parser$add_argument("--covariates", nargs=1, type="character", help="Covariates that will be merged with the design matrix")
+parser$add_argument("--output", nargs=1, type="character", help="Output prefix to prepend to output files")
+parser$add_argument("--debugfile", nargs=1, type="character", help="Save voxeldat and designmat objects to this file to develop, test and debug the processVoxel function")
 parser$add_argument("-p", "--processors", type="integer", help="Run using shared memory with p processors")
 parser$add_argument("--sgeN",  type="integer", nargs=1, help="Run using SGE generating N jobs")
+parser$add_argument("--ch", type="integer", help="Number of chunks to split data into if running in parallel")
 
+#source("readargs.R")
 
-source("readargs.R")
+args <- parser$parse_args()
 
+# NATALIE: NEED TO FIX THIS! can't get it to work
+if (length(args) == 0) {
+	message("No arguments given. Use -h or --help to see usage")
+}
 
-args <- parser$parse_args(cmdargs)
-
+###############################################################################
 
 #### Check for mask and read it. It is mandatory and must exist.
 maskfile <- args$mask
@@ -56,7 +60,6 @@ mask.vertices <- which(mask.vector > 0)
 #### Do argument checking
 args <- npointCheckArguments(args)
 
-
 #### Are we running in parallel?
 if (!is.null(args$processors) || !is.null(args$sgeN)) {
     runningParallel =TRUE
@@ -64,7 +67,6 @@ if (!is.null(args$processors) || !is.null(args$sgeN)) {
     runningParallel= FALSE
 }
     
-
 ###############################################################################
 #### Calculate the number of data sets
 numberdatasets <- sum(!is.null(args$set1),
@@ -138,7 +140,14 @@ if (runningParallel) {
         if (args$sgeN > nvertices) {
             stop("Number of SGE jobs requested is greater than the number of vertices")
         }
-        size <- trunc(nvertices/args$sgeN)
+#	if (!is.null(args$ch)) { 
+#		size <- args$ch
+#	} else {        
+#		size <- trunc(nvertices/(args$sgeN-1))
+#	}
+	print(nvertices)
+	print(trunc(nvertices/args$sgeN))
+	size <- trunc(nvertices/args$sgeN)
         njobs <- npointSplitDataSize(size,voxeldat,args$output,mask)
         # save the design matrix
         designmatname <- paste(args$output, "designmat.rds", sep="")
