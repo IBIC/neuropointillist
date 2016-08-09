@@ -18,6 +18,16 @@ You will need the R packages `Rniftilib`, `argparse`, and `doParallel` to be ins
 
 `devtools` depends on the Debian package `libcurl4-openssl-dev`, so you might need a system administrator to make sure that is installed.
 
+`argparse` requires Python version >= 2.7 and Python packages `argparse` and `json`. If you do not already have these packages installed, you can create a Conda environment and install the packages by typing the following commands into the command line.
+
+```
+conda create --name np pip
+source activate np
+pip install json
+pip install argparse
+pip install simplejson
+```
+
 **Instructions for installing `Rniftilib` may be found [here.](http://r-forge.r-project.org/R/?group_id=427)**
 
 Once all prerequisites are installed and you have pulled the `neuropointillist` repository, locally install the package. To do this, `cd` into the repository. You will have a `neuropointillist` subdirectory. Start `R` and type
