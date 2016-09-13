@@ -144,7 +144,7 @@ npointWriteFile <- function(mask, voxeldata,outputfilename) {
 #' @param prefix Text prefix to prepend to the output files
 #' @param mask Nifti mask to split
 #' @export
-npointSplitDataSize <- function(size, voxeldat, prefix,mask) {
+npointSplitDataSize <- function(size, voxeldat, prefix, mask) {
     dir <- dirname(prefix)
     if (!dir.exists(dir)) {
         dir.create(dir, recursive=TRUE)
@@ -154,11 +154,11 @@ npointSplitDataSize <- function(size, voxeldat, prefix,mask) {
     len <- mask.dims[1]*mask.dims[2]*mask.dims[3]
     mask.vector <- as.vector(mask[,,])
     mask.vertices <- which(mask.vector >0)
-    d1 <- split(mask.vertices,  ceiling(seq_along(mask.vertices)/size))
+    d1 <- split(mask.vertices,  ceiling(seq_along(mask.vertices)/(size*1.05)))
     start <- 1
     for (i in 1:length(d1)) {
         y <- vector(mode="numeric",length=len)
-        y[unlist(d1[i])] <- 1
+        y[unlist(d1[i])] <- 0
         nim <- nifti.image.copy.info(mask)
         nim$dim <- dim(mask)
         nifti.image.alloc.data(nim)
@@ -169,7 +169,7 @@ npointSplitDataSize <- function(size, voxeldat, prefix,mask) {
         nifti.image.write(nim)
                       # now subdat the data
         sz <- length(unlist(d1[i]))
-        saveRDS(voxeldat[,start:(start+sz-1)], paste(prefix, sprintf("%04d",i),".rds",sep=""))
+        saveRDS(voxeldat[,start:(start+sz)], paste(prefix, sprintf("%04d",i),".rds",sep=""))
         start <- start+sz
         
     }

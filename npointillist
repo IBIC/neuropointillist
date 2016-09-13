@@ -12,15 +12,15 @@ suppressWarnings(suppressPackageStartupMessages(library(neuropointillist)))
 
 #### Take in command line arguments 
 
-parser <- ArgumentParser(description="This program prepares your data for modeling")
+parser <- ArgumentParser(description="This program prepares your MRI data for group-level mixed effects modeling")
 
 parser$add_argument("-m", "--mask", nargs=1, type="character", help="Mask limiting the voxels that will be analyzed", required=TRUE)
-parser$add_argument("--set1", nargs=1,  help="List of files at first occasion")
+parser$add_argument("--set1", nargs=1,  help="List of files at first occasion", required=TRUE)
 parser$add_argument("--set2", nargs=1, help="List of files at second occasion")
 parser$add_argument("--set3", nargs=1, help="List of files at third occasion")
 parser$add_argument("--set4", nargs=1, help="List of files at fourth occasion")
 parser$add_argument("--set5", nargs=1, help="List of files at fifth occasion")
-parser$add_argument("--setlabels1", nargs=1, help="Covariates for files at first occasion")
+parser$add_argument("--setlabels1", nargs=1, help="Covariates for files at first occasion", required=TRUE)
 parser$add_argument("--setlabels2", nargs=1, help="Covariates for files at second occasion")
 parser$add_argument("--setlabels3", nargs=1, help="Covariates for files at third occasion")
 parser$add_argument("--setlabels4", nargs=1,help="Covariates for files at fourth occasion")
@@ -31,16 +31,8 @@ parser$add_argument("--output", nargs=1, type="character", help="Output prefix t
 parser$add_argument("--debugfile", nargs=1, type="character", help="Save voxeldat and designmat objects to this file to develop, test and debug the processVoxel function")
 parser$add_argument("-p", "--processors", type="integer", help="Run using shared memory with p processors")
 parser$add_argument("--sgeN",  type="integer", nargs=1, help="Run using SGE generating N jobs")
-parser$add_argument("--ch", type="integer", help="Number of chunks to split data into if running in parallel")
-
-#source("readargs.R")
 
 args <- parser$parse_args()
-
-# NATALIE: NEED TO FIX THIS! can't get it to work
-if (length(args) == 0) {
-	message("No arguments given. Use -h or --help to see usage")
-}
 
 ###############################################################################
 
@@ -115,7 +107,7 @@ if (!is.null(args$model)) {
     })
 }
 # check to see that processVoxel is defined
-if( ! exists('processVoxel')) {
+if(!exists('processVoxel')) {
     stop("The model file did not define the processVoxel function")
 }
 
@@ -139,26 +131,23 @@ if (runningParallel) {
         # split up the data into chunks and write out scripts to process
         if (args$sgeN > nvertices) {
             stop("Number of SGE jobs requested is greater than the number of vertices")
-        }
-#	if (!is.null(args$ch)) { 
-#		size <- args$ch
-#	} else {        
-#		size <- trunc(nvertices/(args$sgeN-1))
-#	}
-	print(nvertices)
-	print(trunc(nvertices/args$sgeN))
-	size <- trunc(nvertices/args$sgeN)
-        njobs <- npointSplitDataSize(size,voxeldat,args$output,mask)
-        # save the design matrix
-        designmatname <- paste(args$output, "designmat.rds", sep="")
-        makefilename <- paste(dirname(args$output), "/Makefile", sep="")
-        masterscript <- paste(dirname(args$output), "/runme", sep="")
-        jobscript <- paste(dirname(args$output), "/sgejob.bash", sep="")
-        saveRDS(designmat,designmatname)
-        attach(designmat) # attach to the designmat
-        out <- processVoxel(1) # test one voxel to obtain names for return vals
-        npointWriteMakefile(basename(args$output), names(out), paste(getwd(), "/",args$model,sep=""), basename(designmatname), makefilename)
-        npointWriteSGEsubmitscript(basename(args$output), names(out), paste(getwd(), "/",args$model,sep=""), basename(designmatname), masterscript,jobscript, njobs) 
+        } else {
+          cat("no. of vertices", nvertices, "\n")
+  	  size <- trunc(nvertices/args$sgeN)
+          cat("size", trunc(nvertices/args$sgeN), "\n")
+          njobs <- npointSplitDataSize(size,voxeldat,args$output,mask)
+          cat("no. of jobs", njobs ,"\n")
+          # save the design matrix
+          designmatname <- paste(args$output, "designmat.rds", sep="")
+          makefilename <- paste(dirname(args$output), "/Makefile", sep="")
+          masterscript <- paste(dirname(args$output), "/runme", sep="")
+          jobscript <- paste(dirname(args$output), "/sgejob.bash", sep="")
+          saveRDS(designmat,designmatname)
+          attach(designmat) # attach to the designmat
+          out <- processVoxel(1) # test one voxel to obtain names for return vals
+          npointWriteMakefile(basename(args$output), names(out), paste(getwd(), "/",args$model,sep=""), basename(designmatname), makefilename)
+          npointWriteSGEsubmitscript(basename(args$output), names(out), paste(getwd(), "/",args$model,sep=""), basename(designmatname), masterscript,jobscript, njobs) 
+    	}
     }
 } else {
     cat("Starting sequential job\n")
