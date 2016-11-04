@@ -7,5 +7,6 @@ cmdargs <- c("-m","mask.nii.gz", "--set1", "setfilenames1.txt",
              "--covariates", "Flournoy.new.csv",
              "--model", "model2.R",
              "--output", "comparemodels/fl.",
+             "--debugfile", "debugfileoutput",
              "--sgeN", "24")
              

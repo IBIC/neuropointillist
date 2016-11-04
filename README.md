@@ -51,6 +51,8 @@ Make sure that the repository directory which contains the R scripts `npointilli
 `--covariates covariatefile.csv  --mask mask.nii.gz --model code.R  [ -p N | --sgeN N] --output output`
 `--debugfile outputfile `
 
+If a file called `readargs.R` exists that sets a vector called `cmdargs`, this file will be read to obtain the arguments for `npointillist` instead of taking them from the command line. This is intended to make it a little easier to remember the long lists of arguments.
+
 File inputs that are supported are nifti files. _Cifti, and mgz files will be supported in the future.  Alternatively, the user should also be able to supply a CSV file with the data in it, for other types of neuroimaging analysis that might not conform to this model._ The file type is determined simply by the extension (.nii = cifti, .nii.gz = nifti, .mgz is vertex surface). 
 
 `--set1`, `--set2`, ..`--set5`
@@ -79,7 +81,7 @@ The setlabel files are csv files that specify variables that correspond to the f
 
 `--output` Specify an output prefix that is prepended to output files. This is useful for organizing output for SGE runs; you can specify something like `--output model-stressXtime/mod1` to organize all the output files and execution scripts into a subdirectory. 
 
-`--debug debugfile` Write out external representations of the design matrix and the fMRI data to the file `debugfile`. This may be useful for development and testing of your model, or troubleshooting problems with the setfiles or covariate files.
+`--debug debugfile` Write out external representations of the design matrix, the fMRI data, and a function called `imagecoordtovertex`, which maps three-dimensional image coordinates from fslview into a vertex number, to the file `debugfile`. This may be useful for development and testing of your model, or troubleshooting problems with the setfiles or covariate files. 
 
 ## Writing the processVoxel function
 This function takes a single value `v` which is a numeric index for a voxel. The code should also load any libraries that you need to support your model (e.g., `nlme`). Before calling `processVoxel`, the code will have attached to the design matrix, so that you have access to all of the named columns in this matrix. Note that we attach to minimize memory copies that might be necessary when running in multicore mode.

@@ -32,7 +32,17 @@ parser$add_argument("--debugfile", nargs=1, type="character", help="Save voxelda
 parser$add_argument("-p", "--processors", type="integer", help="Run using shared memory with p processors")
 parser$add_argument("--sgeN",  type="integer", nargs=1, help="Run using SGE generating N jobs")
 
-args <- parser$parse_args()
+if (file.exists("readargs.R")) {
+    source("readargs.R")
+    if (exists("cmdargs") { # check that cmdargs is defined
+        args <- parser$parse_args(cmdargs)
+    } else {
+        args <- parser$parse_args()
+    }
+} else {
+    args <- parser$parse_args()
+}
+    
 
 ###############################################################################
 
@@ -45,9 +55,16 @@ tryCatch({
     stop(e)
 })
 
-# reduce to vector and obtain list of nonzero vertices
+# save mask dimensions
+mask.dims <- dim(mask)
+
+# reduce to vector and obtain list of nonzero vertices and the x,y,x
 mask.vector <- as.vector(mask[,,])
 mask.vertices <- which(mask.vector > 0)
+
+# assemble the indices to create a reverse lookup table
+mask.arrayindices <- data.frame(which(mask[,,] > 0, arr.in=TRUE))
+mask.arrayindices$vertex <- mask.vertices
 
 #### Do argument checking
 args <- npointCheckArguments(args)
@@ -58,6 +75,25 @@ if (!is.null(args$processors) || !is.null(args$sgeN)) {
 } else {
     runningParallel= FALSE
 }
+
+#### A lookup function to convert FSL indices to a vertex number for testing
+imagecoordtovertex <- function(x,y,z) {
+    # first add 1 to convert from index at zero to index at 1
+    nx <- x+1
+    ny <- y+1
+    nz <- z+1
+    row <- mask.arrayindices[which(mask.arrayindices$dim1==nx&
+                                   mask.arrayindices$dim2==ny&
+                                   mask.arrayindices$dim3==nz),]
+    if(is.data.frame(row) && nrow(row)==0) {
+        warning("This coordinate is not in the mask; returning 1")
+        return(1)
+    } else {
+        return(as.integer(row.names(row)))
+    }
+}
+    
+
     
 ###############################################################################
 #### Calculate the number of data sets
@@ -88,7 +124,7 @@ if (!is.null(args$covariates)) {
 ### If debugging file is specified, save out design matrix and voxel matrix
 ### to this file
 if(!is.null(args$debugfile)) {
-    save(designmat,voxeldat, file=args$debugfile)
+    save(designmat,voxeldat, imagecoordtovertex, mask.arrayindices, file=args$debugfile)
 }
 
 ###############################################################################
@@ -106,6 +142,7 @@ if (!is.null(args$model)) {
 
     })
 }
+                   
 # check to see that processVoxel is defined
 if(!exists('processVoxel')) {
     stop("The model file did not define the processVoxel function")
