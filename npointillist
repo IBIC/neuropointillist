@@ -34,7 +34,7 @@ parser$add_argument("--sgeN",  type="integer", nargs=1, help="Run using SGE gene
 
 if (file.exists("readargs.R")) {
     source("readargs.R")
-    if (exists("cmdargs") { # check that cmdargs is defined
+    if (exists("cmdargs")) { # check that cmdargs is defined
         args <- parser$parse_args(cmdargs)
     } else {
         args <- parser$parse_args()
