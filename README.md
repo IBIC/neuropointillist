@@ -14,7 +14,7 @@ reassemble results.
 
 #Installation
 
-You will need the R packages `Rniftilib`, `argparse`, and `doParallel` to be installed. In addition, to locally install the development `neuropointillist` R library, you will need the R packages `devtools`. If you are actually doing development, you should also install the R package `roxygen2`.
+You will need the R packages `Rniftilib`, `argparse`, and `doParallel` to be installed. In addition, to locally install the development `neuropointillist` R library, it might help to have the R package `devtools`. If you are actually doing development, you should also install the R package `roxygen2`.
 
 `devtools` depends on the Debian package `libcurl4-openssl-dev`, so you might need a system administrator to make sure that is installed.
 
@@ -56,11 +56,11 @@ If a file called `readargs.R` exists that sets a vector called `cmdargs`, this f
 File inputs that are supported are nifti files. _Cifti, and mgz files will be supported in the future.  Alternatively, the user should also be able to supply a CSV file with the data in it, for other types of neuroimaging analysis that might not conform to this model._ The file type is determined simply by the extension (.nii = cifti, .nii.gz = nifti, .mgz is vertex surface). 
 
 `--set1`, `--set2`, ..`--set5`
- By default, the command line variant of the program supports up to 5 input sets. If more than five files are necessary one should use the programmatic interface. Each setfile (`listoffiles1.text ... listoffiles2.txt`) is a text file that contains the filenames in each set, one per row. These sets can correspond to longitudinal data points. They do not have to have the same subjects in each set (i.e., there can be missing data if the models you intend to use support that). **At least one set and corresponding setlabel must be provided **
+ By default, the command line variant of the program supports up to 5 input sets. These sets can correspond to longitudinal data points. If more than five input file sets are necessary one should use the programmatic interface, or organize your data as a single input file set in long format with corresponding covariates. Each setfile (`listoffiles1.text ... listoffiles2.txt`) is a text file that contains the filenames in each set, one per row. These sets can correspond to longitudinal data points. They do not have to have the same subjects in each set (i.e., there can be missing data if the models you intend to use support that). **At least one set and corresponding setlabel must be provided **
  
  `--setlabels1`, `--setlabels2`, ... `setlabels5`
  
-The setlabel files are csv files that specify variables that correspond to the files in the sets provided above. There must be exactly the same number of setlabel files as sets. If the MRI data files in each set are three dimensional, the list of files in the set  should have exactly the same number of entries as the corresponding label csv file.  If the files are four dimensional (fMRI data), the corresponding label csv files should include one entry per volume (e.g., the TR). The data from the setlabels must be provided in the same order as the data in the set files. Normally, set label files will include (at the least) an id number and a time point for each 3D file that is specified. For 4D files, set label files will probably include an id number, time point, TR and elements of the fMRI design matrix. The headers of the setlabel files must be consistent across sets, and consistent with headers in the covariate file, if specified, below. **At least one set and setlabel must be provided.**
+The setlabel files are csv files that specify variables that correspond to the files in the sets provided above. There must be exactly the same number of setlabel files as sets. If the MRI data files in each set are three dimensional, the list of files in the set  should have exactly the same number of entries as the corresponding label csv file.  If the files are four dimensional (fMRI data), the corresponding label csv files should include one entry per volume (TR). The data from the setlabels must be provided in the same order as the data in the set files. Normally, set label files will include (at the least) an id number and a time point for each 3D file that is specified. For 4D files, set label files will probably include an id number, time point, TR and elements of the fMRI design matrix. The headers of the setlabel files must be consistent across sets, and consistent with headers in the covariate file, if specified, below. **At least one set and setlabel must be provided.**
 
 `--covariates`  Subject identifiers can be associated with any number of covariates as specified in the covariate file, which are csv files. These files can contain additional information about subjects, for example, age at a particular time or IQ. All information in covariate files can also be specified in the setlablels; this option is largely a convenience option. If a covariate file is specified, it will be merged with the content of the setlabel files based on all the header fields that are common to both. An error will occur if there are no header fields in common. 
 
@@ -98,10 +98,10 @@ You will need to figure out how to turn off any underlying parallelism. For the 
 Practically, I recommend running using SGE parallelism to give
 yourself the widest range of opportunities to complete your job using
 limited resources. If you do that, you can use `make` on a multicore
-machine, you can use any SGE that you like, and you can even copy
-files to multiple computers and run subsets of the job on different
-machines.
-
+machine, you can use any SGE that you like, and it should be pretty
+easy to use any other batch scheduler that takes scripts. You can even
+copy files to multiple computers and run subsets of the job on
+different machines.
 
 ## Running a model using SGE parallelism 
 
