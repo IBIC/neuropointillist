@@ -1,8 +1,8 @@
-#Flexible modeling of neuroimaging data in R, point by point
+# Flexible modeling of neuroimaging data in R, point by point
 
 <img src="logo.jpg" alt="Neuropointillist logo" height="250"/>
 
-#Overview
+# Overview
 
 This project contains an in-development R package (called
 `neuropointillist`) which defines functions to help combine multiple
@@ -12,21 +12,13 @@ are three standalone programs. `npointillist` and `npointrun` use the
 `neuropointillist` package, and `npointmerge` uses FSL commands to
 reassemble results.
 
-#Installation
+# Installation
 
 You will need the R packages `Rniftilib`, `argparse`, and `doParallel` to be installed. In addition, to locally install the development `neuropointillist` R library, it might help to have the R package `devtools`. If you are actually doing development, you should also install the R package `roxygen2`.
 
 `devtools` depends on the Debian package `libcurl4-openssl-dev`, so you might need a system administrator to make sure that is installed.
 
-`argparse` requires Python version >= 2.7 and Python packages `argparse` and `json`. If you do not already have these packages installed, you can create a Conda environment and install the packages by typing the following commands into the command line.
-
-```
-conda create --name np pip
-source activate np
-pip install json
-pip install argparse
-pip install simplejson
-```
+`argparse` requires Python version >= 2.7 and Python packages `argparse` and `json`. 
 
 **Instructions for installing `Rniftilib` may be found [here.](http://r-forge.r-project.org/R/?group_id=427)**
 
@@ -51,7 +43,7 @@ Make sure that the repository directory which contains the R scripts `npointilli
 `--covariates covariatefile.csv  --mask mask.nii.gz --model code.R  [ -p N | --sgeN N] --output output`
 `--debugfile outputfile `
 
-If a file called `readargs.R` exists that sets a vector called `cmdargs`, this file will be read to obtain the arguments for `npointillist` instead of taking them from the command line. This is intended to make it a little easier to remember the long lists of arguments.
+If a file called `readargs.R` exists that sets a vector called `cmdargs`, this file will be read to obtain the arguments for `npointillist` instead of taking them from the command line. This is intended to make it a little easier to remember the long lists of arguments. 
 
 File inputs that are supported are nifti files. _Cifti, and mgz files will be supported in the future.  Alternatively, the user should also be able to supply a CSV file with the data in it, for other types of neuroimaging analysis that might not conform to this model._ The file type is determined simply by the extension (.nii = cifti, .nii.gz = nifti, .mgz is vertex surface). 
 
@@ -79,9 +71,9 @@ The setlabel files are csv files that specify variables that correspond to the f
 
 `--sgeN N` Alternatively, the `--sge` argument specifies to read the data and divide it into `N` jobs that can be submitted to  the SGE (using a script that is generated called, suggestively, `runme`) or divided among machines by hand and run using GNU make. If SGE parallelism is used, we assume that the directory that the program is called from is read/writeable from all cluster nodes. **See notes below on running a model using SGE parallelism.**
 
-`--output` Specify an output prefix that is prepended to output files. This is useful for organizing output for SGE runs; you can specify something like `--output model-stressXtime/mod1` to organize all the output files and execution scripts into a subdirectory. 
+`--output` Specify an output prefix that is prepended to output files. This is useful for organizing output for SGE runs; you can specify something like `--output model-stressXtime/mod1` to organize all the output files and execution scripts into a subdirectory. In addition, the model that you used and the calling arguments will be copied with this prefix so that you can remember what you ran. This is modeled off of how FSL FEAT copies the .fsf file into the FEAT directory (so simple and so handy)!
 
-`--debug debugfile` Write out external representations of the design matrix, the fMRI data, and a function called `imagecoordtovertex`, which maps three-dimensional image coordinates from fslview into a vertex number, to the file `debugfile`. This may be useful for development and testing of your model, or troubleshooting problems with the setfiles or covariate files. 
+`--debug debugfile` Write out external representations of the design matrix, the fMRI data, and a function called `imagecoordtovertex`, which maps three-dimensional image coordinates (e.g. from fslview) into a vertex number, to the file `debugfile`. This may be useful for development and testing of your model, or troubleshooting problems with the setfiles or covariate files. 
 
 ## Writing the processVoxel function
 This function takes a single value `v` which is a numeric index for a voxel. The code should also load any libraries that you need to support your model (e.g., `nlme`). Before calling `processVoxel`, the code will have attached to the design matrix, so that you have access to all of the named columns in this matrix. Note that we attach to minimize memory copies that might be necessary when running in multicore mode.
