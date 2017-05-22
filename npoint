@@ -27,7 +27,7 @@ parser$add_argument("--setlabels4", nargs=1,help="Covariates for files at fourth
 parser$add_argument("--setlabels5", nargs=1, help="Covariates for files at fifth occasion")
 parser$add_argument("--model", nargs=1, help="R code that defines the voxelwise-model and any initialization", required=TRUE)
 parser$add_argument("--covariates", nargs=1, type="character", help="Covariates that will be merged with the design matrix")
-parser$add_argument("--output", nargs=1, type="character", help="Output prefix to prepend to output files")
+parser$add_argument("--output", nargs=1, type="character", help="Output prefix to prepend to output files", required=TRUE)
 parser$add_argument("--debugfile", nargs=1, type="character", help="Save voxeldat and designmat objects to this file to develop, test and debug the processVoxel function")
 parser$add_argument("-t", "--testvoxel", type="integer", help="Specify a voxel on which the model works to determine output files", default="-1")
 parser$add_argument("-p", "--processors", type="integer", help="Run using shared memory with p processors")
@@ -67,6 +67,8 @@ mask.vertices <- which(mask.vector > 0)
 mask.arrayindices <- data.frame(which(mask[,,] > 0, arr.in=TRUE))
 mask.arrayindices$vertex <- mask.vertices
 
+#### Save original arguments for writing out calling info
+origargs <- args
 
 
 #### Do argument checking
@@ -128,7 +130,13 @@ if (!is.null(args$covariates)) {
 ### If debugging file is specified, save out design matrix and voxel matrix
 ### to this file
 if(!is.null(args$debugfile)) {
-    save(designmat,voxeldat, imagecoordtovertex, mask.arrayindices, file=args$debugfile)
+    dir <- dirname(args$output)
+    if (!dir.exists(dir)) {
+        dir.create(dir, recursive=TRUE)
+    }
+    # add the prefix to the debug file name
+    debugfilename <- paste(dir, args$debugfile,sep="/")
+    save(designmat,voxeldat, imagecoordtovertex, mask.arrayindices, file=debugfilename)
 }
 
 ###############################################################################
@@ -168,7 +176,7 @@ if (runningParallel) {
         system.time(results <-parSapply(cl,1:nvertices, processVoxel))
         stopCluster(cl)
         npointWriteOutputFiles(args$output,results,mask)
-        npointWriteCallingInfo(args)
+        npointWriteCallingInfo(origargs)
     } else { # we are using SGE
         # split up the data into chunks and write out scripts to process
         if (args$sgeN > nvertices) {
@@ -183,7 +191,8 @@ if (runningParallel) {
           # save the design matrix
           designmatname <- paste(args$output, "designmat.rds", sep="")
           makefilename <- paste(dirname(args$output), "/Makefile", sep="")
-          masterscript <- paste(dirname(args$output), "/runme", sep="")
+          masterscript.local <- paste(dirname(args$output), "/runme.local", sep="")
+          masterscript.sge <- paste(dirname(args$output), "/runme.sge", sep="")
           jobscript <- paste(dirname(args$output), "/sgejob.bash", sep="")
           saveRDS(designmat,designmatname)
           attach(designmat) # attach to the designmat
@@ -196,9 +205,9 @@ if (runningParallel) {
               message("try providing the -t option to give a specific voxel for testing")
               message(e)
           stop("Exiting before generating makefile.")})
-          npointWriteMakefile(basename(args$output), names(out), paste(getwd(), "/",args$model,sep=""), basename(designmatname), makefilename)
-          npointWriteSGEsubmitscript(basename(args$output), names(out), paste(getwd(), "/",args$model,sep=""), basename(designmatname), masterscript,jobscript, njobs)
-          npointWriteCallingInfo(args)
+          npointWriteMakefile(basename(args$output), names(out), paste(getwd(), "/",args$model,sep=""), basename(designmatname), makefilename, masterscript.local)
+          npointWriteSGEsubmitscript(basename(args$output), names(out), paste(getwd(), "/",args$model,sep=""), basename(designmatname), masterscript.sge,jobscript, njobs)
+          npointWriteCallingInfo(origargs)
       }
     }
     } else {
@@ -208,7 +217,7 @@ if (runningParallel) {
     cat("because your code might run faster if you limit the number of threads\n")
     system.time(results <-sapply(1:nvertices, processVoxel))
     npointWriteOutputFiles(args$output,results,mask)
-    npointWriteCallingInfo(args)
+    npointWriteCallingInfo(origargs)
 }
 
         

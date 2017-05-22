@@ -1,2 +1,8 @@
-fmri/RC4101_A_func2std.nii.gz
-fmri/RC4103_A_func2std.nii.gz
+fmri/s1_Time01.nii.gz
+fmri/s2_Time01.nii.gz
+fmri/s3_Time01.nii.gz
+fmri/s4_Time01.nii.gz
+fmri/s5_Time01.nii.gz
+fmri/s6_Time01.nii.gz
+fmri/s7_Time01.nii.gz
+fmri/s8_Time01.nii.gz

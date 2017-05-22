@@ -5,19 +5,23 @@ library(nlme)
 
 processVoxel <-function(v) {
     Y <- voxeldat[,v]
-    e <- try(mod1 <- lme(Y ~ AllCue+AllCueDerivative+AllTarget+AllTargetDerivative+conf1+conf2+conf3+conf4+conf5+conf6+conf7+conf8+conf9+conf10 +conf11+conf12+conf13+conf14, random=~1|idnum, method=c("ML"), na.action=na.omit, control=lmeControl(returnObject=TRUE,singular.ok=TRUE)))
+    e <- try(mod <- lme(Y ~ High+Low, random=~1|subject, method=c("ML"), na.action=na.omit, corr=corAR1(form=~1|subject), control=lmeControl(returnObject=TRUE,singular.ok=TRUE)))
     if(inherits(e, "try-error")) {
-        mod1 <- NULL
+        mod <- NULL
     }
-    if(!is.null(mod1)) {
-        retvals <- list(summary(mod1)$tTable["AllCue", "t-value"],
-                        summary(mod1)$tTable["AllTarget", "t-value"])
+    if(!is.null(mod)) {
+        contr <- c(0, 1,-1)
+        out <- anova(mod,L=contr)
+        t.stat <- (t(contr)%*%mod$coefficients$fixed)/sqrt(t(contr)%*%vcov(mod)%*%contr)
+        p <- 1-pt(t.stat,df=out$denDF)
+        retvals <- list(summary(mod)$tTable["High", "t-value"],
+                        summary(mod)$tTable["Low", "t-value"], t.stat, p)
     } else {
     # If we are returning 4 dimensional data, we need to be specify how long
     # the array will be in case of errors
-        retvals <- list(999,999)
+        retvals <- list(999,999,999,999)
     }
-    names(retvals) <- c("tstat-AllCue", "tstat-AllTarget")
+    names(retvals) <- c("tstat-High", "tstat-Low", "tstat-High.gt.Low", "p-High.gt.Low")
     retvals
 }
 

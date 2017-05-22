@@ -19,6 +19,14 @@ npointCheckSetLabels <- function(set, setlabels) {
 #' @export
 #' @return args Modified argument structure, with set files replaced with actual list of files
 npointCheckArguments <- function(args) {
+    if (!is.null(args$output)) {
+        lastchar = substr(args$output,nchar(args$output), nchar(args$output))
+        if (lastchar=="/") {
+            warning(paste("You have specified output should be prefixed with ", args$output))
+            stop(paste("If you are intending to specify an output directory, you must give a prefix after the trailing slash, for example", paste(args$output, "pre.")))
+        }
+    }
+
     npointCheckSetLabels(args$set1,args$setlabels1)
     npointCheckSetLabels(args$set2,args$setlabels2)
     npointCheckSetLabels(args$set3,args$setlabels3)
@@ -154,11 +162,11 @@ npointSplitDataSize <- function(size, voxeldat, prefix, mask) {
     len <- mask.dims[1]*mask.dims[2]*mask.dims[3]
     mask.vector <- as.vector(mask[,,])
     mask.vertices <- which(mask.vector >0)
-    d1 <- split(mask.vertices,  ceiling(seq_along(mask.vertices)/(size*1.05)))
+    d1 <- split(mask.vertices,  ceiling(seq_along(mask.vertices)/(size)))
     start <- 1
     for (i in 1:length(d1)) {
         y <- vector(mode="numeric",length=len)
-        y[unlist(d1[i])] <- 0
+        y[unlist(d1[i])] <- 1
         nim <- nifti.image.copy.info(mask)
         nim$dim <- dim(mask)
         nifti.image.alloc.data(nim)
@@ -169,7 +177,7 @@ npointSplitDataSize <- function(size, voxeldat, prefix, mask) {
         nifti.image.write(nim)
                       # now subdat the data
         sz <- length(unlist(d1[i]))
-        saveRDS(voxeldat[,start:(start+sz)], paste(prefix, sprintf("%04d",i),".rds",sep=""))
+        saveRDS(voxeldat[,start:(start+sz-1)], paste(prefix, sprintf("%04d",i),".rds",sep=""))
         start <- start+sz
         
     }

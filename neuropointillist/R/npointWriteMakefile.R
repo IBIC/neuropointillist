@@ -7,14 +7,19 @@
 #' @param modelfile Name of the R model file that contains the processVoxel command
 #' @param designmat Design matrix
 #' @param makefile Name of makefile
+#' @param localscript Name of script to execute makefile locally
 #' @export
-npointWriteMakefile <- function(prefix, resultnames, modelfile, designmat, makefile) {
+npointWriteMakefile <- function(prefix, resultnames, modelfile, designmat, makefile, localscript) {
     dir <- dirname(prefix)
     if (!dir.exists(dir)) {
         dir.create(dir, recursive=TRUE)
     }
     # the name of one of the outputfiles that is created
     outputfile <- paste(resultnames[1], ".nii.gz",sep="")
+
+    fileConn <- file(localscript)
+    writeLines(c("make -j\n"), fileConn)
+
     fileConn <- file(makefile)
     alltarget <- "all: $(outputs) "
     allrules <- c()

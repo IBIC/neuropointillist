@@ -1,4 +1,4 @@
-adf <- read.csv('/home/jflournoy/code/neuropointillist/example.lavaan/Flournoy.new.csv')
+adf <- read.csv('Flournoy.new.csv')
 
 #assume v is thet voxel-wise estimate of the self-other contrast
 adf$v <- rnorm(dim(adf)[1], 0, 1)
@@ -34,7 +34,7 @@ summary(cor_lgc_fit)
 #many options in lavaan for extracting information from the model
 #see http://lavaan.ugent.be/tutorial/inspect.html
 param_ests <- parameterEstimates(cor_lgc_fit)
-std_param_ests <- standardizedsolution(cor_lgc_fit)
+std_param_ests <- standardizedsolution(cor_lgc_fit,type="std.all")
 fit_measures <- fitMeasures(cor_lgc_fit)
 
 #the user will almost certainly want the values for the intercepts and covariances of the latent growth parameters

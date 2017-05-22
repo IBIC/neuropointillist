@@ -5,18 +5,27 @@
 # Overview
 
 This project contains an in-development R package (called
-`neuropointillist`) which defines functions to help combine multiple
+`neuropointillist`) which defines functions to help scientists to run voxel-wise models using R on neuroimaging data. Why would one like to do this, rather than using a dedicated fMRI analysis packages?
+
+First, fMRI analysis packages are generally quite limited in the models that they can run. This package can help you run structural equation models on your fMRI data if you wish.
+
+Second, it is really instructive to understand what fMRI software is doing with your data. T statistics are so much sweeter when you have generated them with your own R code.
+
+The `neuropointillist` package has functions to combine multiple
 sets of neuroimaging data, run arbitrary R code (a "model") on each
 voxel in parallel, output results, and reassemble the data. Included
-are three standalone programs. `npointillist` and `npointrun` use the
+are three standalone programs. `npoint` and `npointrun` use the
 `neuropointillist` package, and `npointmerge` uses FSL commands to
 reassemble results.
 
+There are some examples included in this package that use data that we cannot release. These are useful only for looking at modeling code or for inspiration. However, we have simulated two timepoints of fMRI data and have a complete example and a worked vignette.
+
+
 # Installation
 
-You will need the R packages `Rniftilib`, `argparse`, and `doParallel` to be installed. In addition, to locally install the development `neuropointillist` R library, it might help to have the R package `devtools`. If you are actually doing development, you should also install the R package `roxygen2`.
+You will need the R packages `Rniftilib`, `argparse`, and `doParallel` to be installed. 
 
-`devtools` depends on the Debian package `libcurl4-openssl-dev`, so you might need a system administrator to make sure that is installed.
+
 
 `argparse` requires Python version >= 2.7 and Python packages `argparse` and `json`. 
 
@@ -28,9 +37,13 @@ Once all prerequisites are installed and you have pulled the `neuropointillist` 
 install.packages("neuropointillist", repos=NULL, type="source")
 ```
 
-or 
+If you are planning to do development on the R package, it might help to have the R package `devtools`. If you are actually doing development, you should also install the R package `roxygen2`.
+
+`devtools` depends on the Debian package `libcurl4-openssl-dev`, so you might need a system administrator to make sure that is installed. If you have installed `devtools`, you can locally install the package as follows.
+
 
 ``` R
+library(devtools)
 install("neuropointillist")
 ```
 **! Note that `neuropointillist` requires R version >= 3.2.3**
@@ -71,9 +84,9 @@ The setlabel files are csv files that specify variables that correspond to the f
 
 `--sgeN N` Alternatively, the `--sge` argument specifies to read the data and divide it into `N` jobs that can be submitted to  the SGE (using a script that is generated called, suggestively, `runme`) or divided among machines by hand and run using GNU make. If SGE parallelism is used, we assume that the directory that the program is called from is read/writeable from all cluster nodes. **See notes below on running a model using SGE parallelism.**
 
-`--output` Specify an output prefix that is prepended to output files. This is useful for organizing output for SGE runs; you can specify something like `--output model-stressXtime/mod1` to organize all the output files and execution scripts into a subdirectory. In addition, the model that you used and the calling arguments will be copied with this prefix so that you can remember what you ran. This is modeled off of how FSL FEAT copies the .fsf file into the FEAT directory (so simple and so handy)!
+`--output` Specify an output prefix that is prepended to output files. This is useful for organizing output for SGE runs; you can specify something like `--output model-stressXtime/mod1` to organize all the output files and execution scripts into a subdirectory. In addition, the model that you used and the calling arguments will be copied with this prefix so that you can remember what you ran. This is modeled off of how FSL FEAT copies the .fsf file into the FEAT directory (so simple and so handy)! (**required**)
 
-`--debug debugfile` Write out external representations of the design matrix, the fMRI data, and a function called `imagecoordtovertex`, which maps three-dimensional image coordinates (e.g. from fslview) into a vertex number, to the file `debugfile`. This may be useful for development and testing of your model, or troubleshooting problems with the setfiles or covariate files. 
+`--debug debugfile` Write out external representations of the design matrix, the fMRI data, and a function called `imagecoordtovertex`, which maps three-dimensional image coordinates (e.g. from fslview) into a vertex number, to the file `debugfile`. This may be useful for development and testing of your model, or troubleshooting problems with the setfiles or covariate files. The debugfile will be prefixed by the output prefix. See the Vignette for instructions for how to use the debugfile.
 
 ## Writing the processVoxel function
 This function takes a single value `v` which is a numeric index for a voxel. The code should also load any libraries that you need to support your model (e.g., `nlme`). Before calling `processVoxel`, the code will have attached to the design matrix, so that you have access to all of the named columns in this matrix. Note that we attach to minimize memory copies that might be necessary when running in multicore mode.
@@ -99,40 +112,45 @@ different machines.
 
 The `readargs.R` file in `example.rawfmri` is configured so that it will create a directory called `sgetest` with the assembled design matrix file (in rds format), the split up fMRI data (also in rds format), and files to run the job. These files are:
 
-`Makefile` This file contains the rules for running each subjob and assembling the results. Note that the executables `npointrun` and `npointmerge` must be in your path environment. You can run your job by typing `make -j <ncores>` at the command line in the `sgetest` directory. You can also type `make mostlyclean` to remove all the intermediate files once your job has completed and you have reassembled your output (by any method). If instead you type `make clean`, you can remove all the rds files also. 
-
+`Makefile` This file contains the rules for running each subjob and assembling the results. Note that the executables `npointrun` and `npointmerge` must be in your path environment. You can run your job by typing `make -j <ncores>` at the command line in the `sgetest` directory, or by calling the script `runme.local`. You can also type `make mostlyclean` to remove all the intermediate files once your job has completed and you have reassembled your output (by any method). If instead you type `make clean`, you can remove all the rds files also. 
 
 `sgejob.bash` This is the job submission script for processing the data using SGE. Note that `npointrun` needs to be in your path. The commands in the job submission script are bash commands.
 
-`runme` This script will submit the job to the SGE and call Make to merge the resulting files when the job has completed. It is an SGE/Make hybrid.
+`runme.sge` This script will submit the job to the SGE and call Make to merge the resulting files when the job has completed. It is an SGE/Make hybrid.
 
 ## Running a model using multicore parallelism
 
-The `readargs.R` file in the `example.flournoy` directory is configured so that it will use 24 cores to compare two models. Make sure that you change this number to be lower if your  machine does not have 24 cores.  
+The `readargs.R` file in the `example.flournoy` directory is configured so that it will use 24 cores to compare two models. You should change this number to be lower if your  machine does not have 24 cores. Note that data are not included for `example.flournoy`.
 
 Note that the syntax for trapping errors is a little bit different. We check to see whether the error inherits from `try-error` as in this example. 
 
 ``` R
+library(nlme)
+
 processVoxel <-function(v) {
     Y <- voxeldat[,v]
-    e <- try(mod1 <- lme(Y ~ AllCue+AllCueDerivative+AllTarget+AllTargetDerivat
-ive+conf1+conf2+conf3+conf4+conf5+conf6+conf7+conf8+conf9+conf10 +conf11+conf12
-+conf13+conf14, random=~1|idnum, method=c("ML"), na.action=na.omit, control=lme
-Control(returnObject=TRUE,singular.ok=TRUE)))
+    e <- try(mod <- lme(Y ~ High+Low, random=~1|subject, method=c("ML"), na.action=na.omit, corr=corAR1(form=~1|subject), control=lmeControl(returnObject=TRUE,singular.ok=TRUE)))
     if(inherits(e, "try-error")) {
-        mod1 <- NULL
+        mod <- NULL
     }
-    if(!is.null(mod1)) {
-        retvals <- list(summary(mod1)$tTable["AllCue", "t-value"],
-                        summary(mod1)$tTable["AllTarget", "t-value"])
+    if(!is.null(mod)) {
+        contr <- c(0, 1,-1)
+        out <- anova(mod,L=contr)
+        t.stat <- (t(contr)%*%mod$coefficients$fixed)/sqrt(t(contr)%*%vcov(mod)%*%contr)
+        p <- 1-pt(t.stat,df=out$denDF)
+        retvals <- list(summary(mod)$tTable["High", "t-value"],
+                        summary(mod)$tTable["Low", "t-value"], t.stat, p)
     } else {
-        retvals <- list(999,999)
+    # If we are returning 4 dimensional data, we need to be specify how long
+    # the array will be in case of errors
+        retvals <- list(999,999,999,999)
     }
-    names(retvals) <- c("tstat-AllCue", "tstat-AllTarget")
+    names(retvals) <- c("tstat-High", "tstat-Low", "tstat-High.gt.Low", "p-High.gt.Low")
     retvals
 }
-```
 
+
+```
 # npointrun
 Run a model on a single data set sequentially, without data splitting
 

@@ -6,14 +6,14 @@ library(nlme)
 
 processVoxel <-function(v) {
 Y <- voxeldat[,v]
-tryCatch({
-    mod <- lme(Y ~ time + domain + target + target*domain, random=~1+time|idnum, method=c("ML"), na.action=na.omit, control=lmeControl(returnObject=TRUE,singular.ok=TRUE))}, error=function(e){
-        message("error thrown at voxel",v)
-        message(e)
-        return(NULL)})
+e <- try(mod <- lme(Y ~ time + domain + target + target*domain, random=~1+time|idnum, method=c("ML"), na.action=na.omit, control=lmeControl(returnObject=TRUE,singular.ok=TRUE)))
+if (inherits(e, "try-error")) {
+    mod <- NULL
+}
 if (!is.null(mod)) {
     mod.tt <- summary(mod)$tTable
-    retvals <- list(mod.tt["time", "p-value"],
+    retvals <- list(
+        mod.tt["time", "p-value"],
                 mod.tt["domain", "p-value"],
                 mod.tt["target", "p-value"],
                 mod.tt["domain:target", "p-value"])
