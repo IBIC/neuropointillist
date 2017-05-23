@@ -151,7 +151,7 @@ attach(designmat)
 Y <- voxeldat[,v]
 ```
 
-## IBIC Internal - Flornoy example
+## IBIC Internal - Flournoy example
 While the code for this example is included in this repository, the data is not released, and is available to people within IBIC.
 
 ### Quick start.
@@ -159,15 +159,15 @@ Go into the directory `flournoy.example`.
 
 `cd flournoy.example`
 
-Ask someone where to find the `sfic` directory that has the data you need to run this example (it is not on github). Copy that directory into the flournoy.example directory:
+Ask someone where to find the `sfic` directory that has the data you need to run this example (it is not on github). Copy that directory into the `flournoy.example` directory:
 
 `cp -r /path/to/sfic sfic`
 
-Look at the arguments in the file `readargs.R`. Most of these you can leave alone, but look at the option to the -p flag. This is 24, which assumes you have 24 processors on your computer. See how many processors you do have:
+Look at the arguments in the file `readargs.R`. Most of these you can leave alone, but look at the option to the `-p` flag. This is 24, which assumes you have 24 processors on your computer. See how many processors you do have:
 
 `nproc`
 
-You should replace 24 with the number of processors on your machine, provided by the nproc command, especially if it is less!
+You should replace 24 with the number of processors on your machine, provided by the `nproc` command, especially if it is less! This flag tells `npoint` to start that many jobs; running more jobs than you have processors can overload your machine.
 
 You need to set an environment variable when using multithreading as above to avoid creating too many threads. If you forget this step, your program might not complete. Do this as follows:
 
@@ -181,13 +181,13 @@ Now wait for a bit. This will take a little time to complete.
 
 When you get your command prompt back, you should have four files in the directory comparemodels:
 
-fl.dAIC.nii.gz, fl.dBIC.nii.gz, fl.LR.nii.gz and fl.LRp.nii.gz
+`fl.dAIC.nii.gz, fl.dBIC.nii.gz, fl.LR.nii.gz and fl.LRp.nii.gz
 
 ### What it means.
 
 This is an example of longitudinal fMRI task data from John Flournoy
 and Jennifer Pfeiffer. Adolescents were scanned at 3 waves (mean age
-10, 13, and 15) while making evaluations of self and other in the
+10, 13, and 16) while making evaluations of self and other in the
 social and academic domains. The “other” target was a fictional
 character, Harry Potter, about whom participants all had substantial
 knowledge. An equal number of items were positive and negative. Sample
