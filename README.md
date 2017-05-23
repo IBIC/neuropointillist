@@ -20,43 +20,13 @@ reassemble results.
 
 There are some examples included in this package that use data that we cannot release. These are useful only for looking at modeling code or for inspiration. However, we have simulated two timepoints of fMRI data and have a complete example and a worked vignette.
 
-
-# Installation
-
-You will need the R packages `Rniftilib`, `argparse`, and `doParallel` to be installed. 
-
-
-
-`argparse` requires Python version >= 2.7 and Python packages `argparse` and `json`. 
-
-**Instructions for installing `Rniftilib` may be found [here.](http://r-forge.r-project.org/R/?group_id=427)**
-
-Once all prerequisites are installed and you have pulled the `neuropointillist` repository, locally install the package. To do this, `cd` into the repository. You will have a `neuropointillist` subdirectory. Start `R` and type
-
-``` R
-install.packages("neuropointillist", repos=NULL, type="source")
-```
-
-If you are planning to do development on the R package, it might help to have the R package `devtools`. If you are actually doing development, you should also install the R package `roxygen2`.
-
-`devtools` depends on the Debian package `libcurl4-openssl-dev`, so you might need a system administrator to make sure that is installed. If you have installed `devtools`, you can locally install the package as follows.
-
-
-``` R
-library(devtools)
-install("neuropointillist")
-```
-**! Note that `neuropointillist` requires R version >= 3.2.3**
-
-Make sure that the repository directory which contains the R scripts `npointillist` and `npointrun` is in your path.
-
-# npointillist
+# npoint
 ## Usage
-`npointillist --set1 listoffiles1.txt --setlabels1 file1.csv --set2 listoffiles2.txt  --setlabels2 file2.csv`
+`npoint --set1 listoffiles1.txt --setlabels1 file1.csv --set2 listoffiles2.txt  --setlabels2 file2.csv`
 `--covariates covariatefile.csv  --mask mask.nii.gz --model code.R  [ -p N | --sgeN N] --output output`
 `--debugfile outputfile `
 
-If a file called `readargs.R` exists that sets a vector called `cmdargs`, this file will be read to obtain the arguments for `npointillist` instead of taking them from the command line. This is intended to make it a little easier to remember the long lists of arguments. 
+If a file called `readargs.R` exists that sets a vector called `cmdargs`, this file will be read to obtain the arguments for `npoint` instead of taking them from the command line. This is intended to make it a little easier to remember the long lists of arguments. 
 
 File inputs that are supported are nifti files. _Cifti, and mgz files will be supported in the future.  Alternatively, the user should also be able to supply a CSV file with the data in it, for other types of neuroimaging analysis that might not conform to this model._ The file type is determined simply by the extension (.nii = cifti, .nii.gz = nifti, .mgz is vertex surface). 
 
@@ -122,33 +92,7 @@ The `readargs.R` file in `example.rawfmri` is configured so that it will create 
 
 The `readargs.R` file in the `example.flournoy` directory is configured so that it will use 24 cores to compare two models. You should change this number to be lower if your  machine does not have 24 cores. Note that data are not included for `example.flournoy`.
 
-Note that the syntax for trapping errors is a little bit different. We check to see whether the error inherits from `try-error` as in this example. 
-
-``` R
-library(nlme)
-
-processVoxel <-function(v) {
-    Y <- voxeldat[,v]
-    e <- try(mod <- lme(Y ~ High+Low, random=~1|subject, method=c("ML"), na.action=na.omit, corr=corAR1(form=~1|subject), control=lmeControl(returnObject=TRUE,singular.ok=TRUE)))
-    if(inherits(e, "try-error")) {
-        mod <- NULL
-    }
-    if(!is.null(mod)) {
-        contr <- c(0, 1,-1)
-        out <- anova(mod,L=contr)
-        t.stat <- (t(contr)%*%mod$coefficients$fixed)/sqrt(t(contr)%*%vcov(mod)%*%contr)
-        p <- 1-pt(t.stat,df=out$denDF)
-        retvals <- list(summary(mod)$tTable["High", "t-value"],
-                        summary(mod)$tTable["Low", "t-value"], t.stat, p)
-    } else {
-    # If we are returning 4 dimensional data, we need to be specify how long
-    # the array will be in case of errors
-        retvals <- list(999,999,999,999)
-    }
-    names(retvals) <- c("tstat-High", "tstat-Low", "tstat-High.gt.Low", "p-High.gt.Low")
-    retvals
-}
-
+Note that the syntax for trapping errors is a little bit different. We check to see whether the error inherits from `try-error`.
 
 ```
 # npointrun

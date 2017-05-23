@@ -1,6 +1,6 @@
 # Neuropointillist Tutorial
 
-This is a simple tutorial for using neuropointillist to run some examples. This assumes that you have already followed the directions in the Installation section of the README.
+This is a tutorial for using neuropointillist to run some examples. This assumes that you have already followed the directions in [Installation](installation.md)
 
 ## Setting your PATH variable
 After you have downloaded and installed the neuropointillist programs in a directory, you need to add this directory to your PATH variable. Suppose that you have downloaded the neuropointillist package into `~/neuropointillist`. Assuming you are running the bash shell, edit your PATH as follows:
