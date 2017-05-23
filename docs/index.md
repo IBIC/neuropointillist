@@ -69,13 +69,13 @@ or, if you have an SGE cluster
 
 When everything has completed, you will have four statistical parameter maps with the results:
 
-`sim.p-High.gt.Low.nii.gz
+* `sim.p-High.gt.Low.nii.gz`
 
-sim.tstat-High.gt.Low.nii.gz
+* `sim.tstat-High.gt.Low.nii.gz`
 
-sim.tstat-High.nii.gz
+* `sim.tstat-High.nii.gz`
 
-sim.tstat-Low.nii.gz`
+* `sim.tstat-Low.nii.gz`
 
 
 ### What it means.
@@ -152,14 +152,14 @@ Y <- voxeldat[,v]
 ```
 
 ## IBIC Internal - Flournoy example
-While the code for this example is included in this repository, the data is not released, and is available to people within IBIC.
+While the code for this example is included in this repository, the data is not released, and is available to people within IBIC. If you are not able to access the data, the models and description of the examples may still be of interest. This is a longitudinal example using the parameter estimates from first level analyses using standard fMRI software. 
 
 ### Quick start.
-Go into the directory `flournoy.example`. 
+Go into the directory `example.flournoy`. 
 
-`cd flournoy.example`
+`cd example.flournoy`
 
-Ask someone where to find the `sfic` directory that has the data you need to run this example (it is not on github). Copy that directory into the `flournoy.example` directory:
+Ask someone where to find the `sfic` directory that has the data you need to run this example (it is not on github). Copy that directory into the `example.flournoy` directory:
 
 `cp -r /path/to/sfic sfic`
 
@@ -179,9 +179,12 @@ Now run the example. This example is totally canned for you so that it reads all
 
 Now wait for a bit. This will take a little time to complete.
 
-When you get your command prompt back, you should have four files in the directory comparemodels:
+When you get your command prompt back, you should have four files (in addition to others) in the directory `comparemodels`:
 
-`fl.dAIC.nii.gz, fl.dBIC.nii.gz, fl.LR.nii.gz and fl.LRp.nii.gz
+* `fl.dAIC.nii.gz`
+* `fl.dBIC.nii.gz`
+* `fl.LR.nii.gz`
+* `fl.LRp.nii.gz`
 
 ### What it means.
 
@@ -208,18 +211,18 @@ Let’s break this down:
 
 The contrasts 1-4 correspond to TargetXDomain (1= SelfXAcademic,
 2=SelfXSocial, 3=OtherXAcademic, and 4=OtherXSocial). These are the
-statistics that are output from a first level analysis.
+statistics that are output from a first level analysis using dedicated fMRI analysis software.
 
-If you go into the example.flournoy directory, you can see that
-setfilenames1.csv contains all the files corresponding to timepoint 1,
-setfilenames2.csv has all the files corresponding to timepoint 2, and
-setfilenames3.csv has all the files corresponding to
-timepoint 3. Similarly, the setlabels1.csv file has a subject id
+If you go into the `example.flournoy` directory, you can see that
+`setfilenames1.csv` contains all the files corresponding to timepoint 1,
+`setfilenames2.csv` has all the files corresponding to timepoint 2, and
+`setfilenames3.csv` has all the files corresponding to
+timepoint 3. Similarly, the `setlabels1.csv` file has a subject id
 number, target code, domain code, and time code corresponding to the
-information embedded in each of the file names in setfilenames1.csv.
+information embedded in each of the file names in `setfilenames1.csv`.
 
 ### Covariates. 
-The arguments in readargs.R specify that there is a covariates file, Flournoy.new.csv. Covariates are data that are normally per subject/timepoint, or possibly just per subject - they are merged with the collected data across all timepoints, assuming that column headers in the setlabels files are the same things as values in the covariates file. If you look at Flournoy.new.csv you can see that the covariates file includes a subject id number, the time point, age of the subject at that time point, sex, and pubertal development status.
+The arguments in readargs.R specify that there is a covariates file, `Flournoy.csv`. Covariates are data that are normally per subject/timepoint, or possibly just per subject - they are merged with the collected data across all timepoints, assuming that column headers in the setlabels files are the same things as values in the covariates file. If you look at `Flournoy.new.csv` you can see that the covariates file includes a subject id number, the time point, age of the subject at that time point, sex, and pubertal development status.
 
 ### Model.
 
@@ -238,6 +241,174 @@ retvals) a list of model fit statistics. The names of these retvals
 are used to create output file names.
 
 Thus, the purpose of this model is to compare two specific models and output voxelwise fit statistics. 
+
+Below is a listing of `model2.R`.
+
+``` R
+library(nlme)
+
+processVoxel <-function(v) {
+    Y <- voxeldat[,v]
+    e <-    try( mod1 <- lme(Y ~ age+ time + domain + target, random=~1+time|idnum, method=c("ML"), na.action=na.omit, control=lmeControl(returnObject=TRUE,singular.ok=TRUE)))
+    if (inherits(e, "try-error")) {
+            message("error thrown at voxel",v)
+            message(e)
+            mod1 <- NULL
+        }
+    e <- try( mod2 <- lme(Y ~ age + time + domain + target + target*domain, random=~1+time|idnum, method=c("ML"), na.action=na.omit, control=lmeControl(returnObject=TRUE,singular.ok=TRUE)))
+    if (inherits(e, "try-error")) {
+        message("error thrown at voxel",v)
+        message(e)
+        mod2 <- NULL
+    }
+    if (!is.null(mod1) & !is.null(mod2)) {
+        comparison <- anova(mod1, mod2)
+        mod2v1.aic <- comparison$AIC[2]-comparison$AIC[1] 
+        mod2v1.bic <- comparison$BIC[2]-comparison$BIC[1] 
+        mod2v1.n2ll <- -2*(comparison$logLik[2]-comparison$logLik[1])
+        mod2v1.n2llp <- comparison$`p-value`[2]
+        mod2.tt <- summary(mod2)$tTable
+        mod1.tt <- summary(mod1)$tTable
+        retvals <- data.frame(mod2v1.aic,
+                      mod2v1.bic,
+                      mod2v1.n2ll,
+                              mod2v1.n2llp,
+                              mod2.tt["time", "p-value"],
+                              mod2.tt["age", "p-value"],                        
+                              mod2.tt["domain", "p-value"],
+                              mod2.tt["target", "p-value"],
+                              mod2.tt["domain:target", "p-value"],
+                              mod2.tt["time", "t-value"],
+                              mod2.tt["age", "t-value"],                              
+                              mod2.tt["domain", "t-value"],
+                              mod2.tt["target", "t-value"],
+                              mod2.tt["domain:target", "t-value"],
+                              mod1.tt["time", "p-value"],
+                              mod1.tt["age", "p-value"],                              
+                              mod1.tt["domain", "p-value"],
+                              mod1.tt["target", "p-value"],
+                              mod1.tt["time", "t-value"],
+                              mod1.tt["age", "t-value"],                        
+                              mod1.tt["domain", "t-value"],
+                              mod1.tt["target", "t-value"])
+
+    } else {
+        retvals <- list(999,999,999,999,999,999,999,999,999,999,999,999,999,999,999,999,999,999,999,999,999,999)
+    }
+    names(retvals) <- c("dAIC", "dBIC", "LR", "LRp",
+                        "mod2time.pvalue", "mod2age.pvalue","mod2domain.pvalue", "mod2target.pvalue", "targetXdomain.pvalue",
+                        "mod2time.tvalue", "mod2age.tvalue","mod2domain.tvalue", "mod2target.tvalue", "targetXdomain.tvalue",
+                        "mod1time.pvalue", "mod1age.pvalue", "mod1domain.pvalue", "mod1target.pvalue",
+                        "mod1time.tvalue", "mod1age.tvalue", "mod1domain.tvalue", "mod1target.tvalue"
+
+                        )                        
+    retvals
+}
+```
+
+
+### Using Lavaan.
+Using the same data set as above, you can see how one might implement a parallel growth model with the R package `lavaan`. An example model is in `example.lavaan`.
+
+``` R
+library(lavaan)
+library(tidyr)
+processVoxel <- function(v) {
+    Y <- voxeldat[,v]
+    adf <- data.frame(idnum,sex,pds,age,time,target,domain,Y)
+    data <- aggregate(adf, by=list(adf$idnum, adf$time),FUN=mean)
+    data$idnum <- data$Group.1
+
+    adf <- data
+    adf <- adf[,c("idnum", "sex", "pds", "age", "time", "Y")]
+    colnames(adf) <-c("idnum", "sex", "pds", "age", "time", "Y")
+
+
+#widen the data for lavaan
+adf_w <- adf[, grep('age', names(adf), invert = T)] %>% 
+  gather(variable, value, pds, Y) %>%
+  unite(var_time, variable, time) %>%
+  spread(var_time, value)
+
+#head(adf_w)
+
+require(lavaan)
+
+cor_lgc_model <- '
+#centered at wave 2, time unit = years
+Y_i =~ 1*Y_0 + 1*Y_1 + 1*Y_2
+Y_s =~ -3*Y_0 + 0*Y_1 + 3*Y_2
+pds_i =~ 1*pds_0 + 1*pds_1 + 1*pds_2
+pds_s =~ -3*pds_0 + 0*pds_1 + 3*pds_2
+
+#correlations explicitly coded, but would be generated by default
+Y_i ~~ Y_s + pds_i + pds_s
+Y_s ~~ pds_i + pds_s
+pds_i ~~ pds_s
+Y_s~~0*Y_s
+'
+
+e <- try(fit <- lavaan::growth(cor_lgc_model, data = adf_w, missing="fiml",standardized=TRUE))
+
+if(inherits(e,"try-error")) {
+            message("error thrown at voxel",v)
+            message(e)
+            fit <- NULL
+        }
+
+    if (!is.null(fit)) {
+        unstd_ests <- parameterEstimates(fit)
+        vars <- subset(unstd_ests, op=="~~" & lhs==rhs)
+        if (sum(vars$est < 0) > 1) { #negative variances, abort!
+            fit <- NULL
+        }
+    }
+
+#summary(fit)
+    if (!is.null(fit)) {
+        unstd_ests <- parameterEstimates(fit)
+        param_ests <- standardizedsolution(fit)
+        param_ests$name <- paste(param_ests$lhs, param_ests$op, param_ests$rhs,sep="")
+  # get p values from unstandardized
+        param_ests$pvalue <- unstd_ests$pvalue
+                                        # get fit measures
+        fit <- fitmeasures(fit, c("rmsea", "cfi", "pvalue"))
+
+
+        latent_int <- param_ests[param_ests$lhs %in% c('Y_i', 'Y_s', 'pds_i', 'pds_s') & 
+                                     param_ests$op %in% c('~1'),]
+        latent_varcov <- param_ests[param_ests$lhs %in% c('Y_i', 'Y_s', 'pds_i', 'pds_s') & 
+                                        param_ests$op %in% c('~~'),]
+
+        ret <- rbind(latent_int, latent_varcov)
+
+# make sure order is correct
+        ret <- ret[order(ret$name),]
+
+        retvals <- c(ret$est.std,ret$pvalue, fit)
+
+        names(retvals) <-c(paste(ret$name,".est",sep=""), paste(ret$name, ".pvalue", sep=""), "rmsea", "cfi", "chisq.pvalue")
+
+    } else {
+        retvals <- rep(-999, 31)
+        names(retvals) <- c(
+"pds_i~1.est",         "pds_i~~pds_i.est",    "pds_i~~pds_s.est",
+ "pds_s~1.est",         "pds_s~~pds_s.est",    "Y_i~1.est",
+ "Y_i~~pds_i.est",      "Y_i~~pds_s.est",      "Y_i~~Y_i.est",
+ "Y_i~~Y_s.est",        "Y_s~1.est",           "Y_s~~pds_i.est",    
+ "Y_s~~pds_s.est",      "Y_s~~Y_s.est",        "pds_i~1.pvalue",    
+ "pds_i~~pds_i.pvalue", "pds_i~~pds_s.pvalue", "pds_s~1.pvalue",    
+ "pds_s~~pds_s.pvalue", "Y_i~1.pvalue",        "Y_i~~pds_i.pvalue",
+ "Y_i~~pds_s.pvalue",   "Y_i~~Y_i.pvalue",     "Y_i~~Y_s.pvalue", 
+ "Y_s~1.pvalue",        "Y_s~~pds_i.pvalue",   "Y_s~~pds_s.pvalue",
+ "Y_s~~Y_s.pvalue",     "rmsea",               "cfi",
+ "chisq.pvalue")     
+}
+retvals
+}
+
+```
+
 
 
 
