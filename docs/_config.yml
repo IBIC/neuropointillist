@@ -1,6 +1,6 @@
 theme: jekyll-theme-cayman
 description: Flexible modeling of neuroimaging data in R, point by point
 navbar-links:
-   Tutorial: "http:ibic.github.io/neuropointillist"
-   Usage: "http:ibic.github.io/neuropointillist/usage.html"
-   Installation: "http:ibic.github.io/neuropointillist/installation.html"
+   Tutorial: "http://ibic.github.io/neuropointillist"
+   Usage: "http://ibic.github.io/neuropointillist/usage.html"
+   Installation: "http://ibic.github.io/neuropointillist/installation.html"
