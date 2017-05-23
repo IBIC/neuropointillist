@@ -1,6 +1,6 @@
 # Flexible modeling of neuroimaging data in R, point by point
 
-<img src="logo.jpg" alt="Neuropointillist logo" height="250"/>
+<img src="docs/logo.jpg" alt="Neuropointillist logo" height="250"/>
 
 # Overview
 

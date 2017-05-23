@@ -1,6 +1,6 @@
 # Neuropointillist Tutorial
 
-![logo](../logo.jpg)
+![logo](logo.jpg)
 
 This is a tutorial for using neuropointillist to run some examples. This assumes that you have already followed the directions in [Installation](installation.md).
 
