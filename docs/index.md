@@ -1,6 +1,8 @@
 # Neuropointillist Tutorial
 
-This is a tutorial for using neuropointillist to run some examples. This assumes that you have already followed the directions in [Installation](installation.md)
+![logo](../logo.jpg)
+
+This is a tutorial for using neuropointillist to run some examples. This assumes that you have already followed the directions in [Installation](installation.md).
 
 ## Setting your PATH variable
 After you have downloaded and installed the neuropointillist programs in a directory, you need to add this directory to your PATH variable. Suppose that you have downloaded the neuropointillist package into `~/neuropointillist`. Assuming you are running the bash shell, edit your PATH as follows:
@@ -9,6 +11,7 @@ After you have downloaded and installed the neuropointillist programs in a direc
 
 This code will make it so that when you type `npoint` or `npointrun` at the command line, your shell can find them. You can put this in your `~/.bashrc` file (if you use bash) so that you don’t have to do this every time you log in.
 
+For detailed usage information, see the [README](../README.md). If you just want to get going, read on!
 
 ## fmri Example
 ### Quick start.
