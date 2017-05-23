@@ -18,5 +18,12 @@ are three standalone programs. `npoint` and `npointrun` use the
 `neuropointillist` package, and `npointmerge` uses FSL commands to
 reassemble results.
 
-There are some examples included in this package that use data that we cannot release. These are useful only for looking at modeling code or for inspiration. However, we have simulated two timepoints of fMRI data and have a complete example and a worked vignette.
+There are some examples included in this package that use data that we
+cannot release. These are useful only for looking at modeling code or
+for inspiration. However, we have simulated two timepoints of fMRI
+data and have a complete example and a worked vignette.
+
+[Documentation is hosted on github pages.](http://ibic.github.io/neuropointillist)
+
+
 
