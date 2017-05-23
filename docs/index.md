@@ -1,6 +1,6 @@
 # Neuropointillist Tutorial
 
-![logo](logo.jpg)
+<img src="logo.jpg" alt="Neuropointillist logo" height="250"/>
 
 This is a tutorial for using neuropointillist to run some examples. This assumes that you have already followed the directions in [Installation](installation.md).
 
