@@ -11,7 +11,7 @@ After you have downloaded and installed the neuropointillist programs in a direc
 
 This code will make it so that when you type `npoint` or `npointrun` at the command line, your shell can find them. You can put this in your `~/.bashrc` file (if you use bash) so that you don’t have to do this every time you log in.
 
-For detailed usage information, see the [README](../README.md). If you just want to get going, read on!
+For detailed usage information, see the [Usage](usage.md). If you just want to get going, read on!
 
 ## fmri Example
 ### Quick start.
