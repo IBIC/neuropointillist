@@ -9,6 +9,12 @@ You will need the R packages `Rniftilib`, `argparse`, and `doParallel` to be ins
 
 **Instructions for installing `Rniftilib` may be found [here.](http://r-forge.r-project.org/R/?group_id=427)**
 
+Note that as of 9/2017, `Rniftilib` is not installing per these instructions. You can install from source as follows.
+``` R
+install.packages("http://www2.uaem.mx/r-mirror/src/contrib/Rniftilib_0.0-32.tar.gz", repos=NULL)
+```
+
+
 Once all prerequisites are installed and you have pulled the `neuropointillist` repository, locally install the package. To do this, `cd` into the repository. You will have a `neuropointillist` subdirectory. Start `R` and type
 
 ``` R
