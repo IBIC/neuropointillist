@@ -9,9 +9,10 @@ You will need the R packages `Rniftilib`, `argparse`, and `doParallel` to be ins
 
 **Instructions for installing `Rniftilib` may be found [here.](http://r-forge.r-project.org/R/?group_id=427)**
 
-Note that as of 9/2017, `Rniftilib` is not installing per these instructions. You can install from source as follows.
+Note that as of 9/2017, `Rniftilib` is not installing per these instructions. You can install from source (from any mirror) as follows.
+
 ``` R
-install.packages("http://www2.uaem.mx/r-mirror/src/contrib/Rniftilib_0.0-32.tar.gz", repos=NULL)
+install.packages("http://ascopa.server4you.net/ubuntu/ubuntu/pool/universe/r/r-cran-rniftilib/r-cran-rniftilib_0.0-35.r79.orig.tar.xz", repos=NULL)
 ```
 
 
