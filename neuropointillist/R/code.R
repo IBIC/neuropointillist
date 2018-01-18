@@ -93,7 +93,8 @@ npointWarnIfNiiFileExists <- function(filename) {
 #' Write out a NifTI file of voxel data
 #'
 #' Take a vector of voxel data and a mask and reassemble it into
-#' an output NifTI file.
+#' an output NifTI file. Make sure that the output file is floating point
+#' or nasty truncation can occur. You want floats, right? 
 #' @param mask NifTI mask corresponding to voxel data
 #' @param voxeldata Vector of voxel data
 #' @param outputfilename 
@@ -114,6 +115,7 @@ npointWriteFile <- function(mask, voxeldata,outputfilename) {
         y <- vector(mode="numeric", length=len)
         y[mask.vertices] <- voxeldata
         nim <- nifti.image.copy.info(mask)
+        nifti.image.setdatatype(nim, "NIFTI_TYPE_FLOAT32")
         nim$dim <- mask.dims
         nifti.image.alloc.data(nim)
         nim[,,] <- as.array(y,mask.dims)
@@ -132,6 +134,7 @@ npointWriteFile <- function(mask, voxeldata,outputfilename) {
         y <- rep(y, nvolumes)
         y[y==1] <- voxeldata
         nim <- nifti.image.copy.info(mask)
+        nifti.image.setdatatype(nim, "NIFTI_TYPE_FLOAT32")
         dims <- c(mask.dims, nvolumes)
         nim$dim <- dims
         nifti.image.alloc.data(nim)
