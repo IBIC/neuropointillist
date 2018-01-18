@@ -4,6 +4,8 @@
 
 # Overview
 
+Note!!! [Documentation is hosted on github pages.](http://ibic.github.io/neuropointillist)
+
 This project contains an in-development R package (called
 `neuropointillist`) which defines functions to help scientists to run voxel-wise models using R on neuroimaging data. Why would one like to do this, rather than using a dedicated fMRI analysis packages?
 
@@ -23,7 +25,7 @@ cannot release. These are useful only for looking at modeling code or
 for inspiration. However, we have simulated two timepoints of fMRI
 data and have a complete example and a worked vignette.
 
-[Documentation is hosted on github pages.](http://ibic.github.io/neuropointillist)
+
 
 
 
