@@ -1,10 +1,20 @@
-#!/bin/bash 
+#!/bin/bash
 # merge some number of files by summing them
+
 output=$1
 shift
 cp $1 $output
+
+#checks if user has fslmaths installed
+if hash fslmaths 2>/dev/null; then
 shift
+echo "Using FSL to merge"
 for i in $*
 do
 fslmaths $output -add $i $output
 done
+#if no fslmaths, use nibabel merge function instead
+else
+echo "Using nibabel to merge"
+nb_npointmerge $output $*
+fi
