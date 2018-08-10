@@ -1,8 +1,8 @@
 #!/usr/bin/env Rscript
 
-#### Make sure packages are installed and load them 
+#### Make sure packages are installed and load them
 
-if (!suppressWarnings(suppressPackageStartupMessages(require(Rniftilib)))) install.packages("Rniftilib", repos="http://R-Forge.R-project.org")
+if (!suppressWarnings(suppressPackageStartupMessages(require(Rniftilib)))) install.packages("http://ascopa.server4you.net/ubuntu/ubuntu/pool/universe/r/r-cran-rniftilib/r-cran-rniftilib_0.0-35.r79.orig.tar.xz", repos=NULL)
 if (!suppressWarnings(suppressPackageStartupMessages(require(argparse)))) install.packages("argparse")
 if (!suppressWarnings(suppressPackageStartupMessages(require(doParallel)))) install.packages("doParallel")
 suppressWarnings(suppressPackageStartupMessages(library(Rniftilib)))
@@ -10,7 +10,7 @@ suppressWarnings(suppressPackageStartupMessages(library(argparse)))
 suppressWarnings(suppressPackageStartupMessages(library(doParallel)))
 suppressWarnings(suppressPackageStartupMessages(library(neuropointillist)))
 
-#### Take in command line arguments 
+#### Take in command line arguments
 
 parser <- ArgumentParser(description="This program prepares your MRI data for group-level mixed effects modeling")
 
@@ -43,7 +43,7 @@ if (file.exists("readargs.R")) {
 } else {
     args <- parser$parse_args()
 }
-    
+
 
 ###############################################################################
 
@@ -98,9 +98,9 @@ imagecoordtovertex <- function(x,y,z) {
         return(as.integer(row.names(row)))
     }
 }
-    
 
-    
+
+
 ###############################################################################
 #### Calculate the number of data sets
 numberdatasets <- sum(!is.null(args$set1),
@@ -154,7 +154,7 @@ if (!is.null(args$model)) {
 
     })
 }
-                   
+
 # check to see that processVoxel is defined
 if(!exists('processVoxel')) {
     stop("The model file did not define the processVoxel function")
@@ -211,7 +211,7 @@ if (runningParallel) {
       }
     }
     } else {
-        
+
     cat("Starting sequential job\n")
     cat("You might want to check whether your model is multithreaded\n")
     cat("because your code might run faster if you limit the number of threads\n")
@@ -219,9 +219,3 @@ if (runningParallel) {
     npointWriteOutputFiles(args$output,results,mask)
     npointWriteCallingInfo(origargs)
 }
-
-        
-                
-
-
-
