@@ -1,0 +1,4 @@
+fmri_data/sub-01_ses-test_task-overtwordrepetition_bold_space-MNI152NLin2009cAsym_preproc.nii.gz
+fmri_data/sub-02_ses-test_task-overtwordrepetition_bold_space-MNI152NLin2009cAsym_preproc.nii.gz
+fmri_data/sub-03_ses-test_task-overtwordrepetition_bold_space-MNI152NLin2009cAsym_preproc.nii.gz
+fmri_data/sub-04_ses-test_task-overtwordrepetition_bold_space-MNI152NLin2009cAsym_preproc.nii.gz

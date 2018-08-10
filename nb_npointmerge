@@ -1,0 +1,15 @@
+#!/usr/bin/env python
+import sys
+import nibabel as nb
+import os
+import glob
+
+def nb_npointmerge(output, image_files):
+	images = [nb.load(img) for img in image_files]
+
+	sum_data = nb.concat_images(images).get_data().sum(axis=3)
+	sum_img = nb.Nifti1Image(sum_data, images[0].affine)
+	sum_img.to_filename(output)
+
+if __name__ == "__main__":
+   nb_npointmerge(sys.argv[1], sys.argv[2:])
