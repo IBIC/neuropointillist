@@ -14,10 +14,17 @@ npointWriteOutputFiles <- function(prefix, results, mask) {
     if (!dir.exists(dir)) {
         dir.create(dir, recursive=TRUE)
     }
-    names <- attributes(results[,1])$names
-    for(i in 1:dim(results)[1]) {
-        statistic <- names[i]
-        outputfilename <- paste(prefix, statistic, ".nii.gz", sep="")
-        npointWriteFile(mask, unlist(results[i,]),outputfilename)
-    }
+    # test to see if more than one name was returned 
+    if(is.array(results)) {
+        names <- attributes(results[,1])$names
+        for(i in 1:dim(results)[1]) {
+            statistic <- names[i]
+            outputfilename <- paste(prefix, statistic, ".nii.gz", sep="")
+            npointWriteFile(mask, unlist(results[i,]),outputfilename)
+        }
+    } else {
+            statistic <- attributes(results)$names[1]
+            outputfilename <- paste(prefix, statistic, ".nii.gz", sep="")
+            npointWriteFile(mask, unlist(results),outputfilename)
+        }
 }
