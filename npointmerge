@@ -1,10 +1,60 @@
-#!/bin/bash 
-# merge some number of files by summing them
-output=$1
-shift
-cp $1 $output
-shift
-for i in $*
-do
-fslmaths $output -add $i $output
-done
+#!/usr/bin/env Rscript
+
+#### Make sure packages are installed and load them 
+
+if (!suppressPackageStartupMessages(require(Rniftilib))) install.packages("Rniftilib", repos="http://R-Forge.R-project.org")
+suppressPackageStartupMessages(library(Rniftilib))
+
+# collect arguments
+args <- commandArgs(TRUE)
+
+if (length(args) < 2) {
+    stop("Usage: npointmerge outputfile.nii.gz merge1.nii.gz merge2.nii.gz ...")
+}
+
+# get name of outputfile
+outputfile <- args[1]
+
+# get name of first merge file
+firstmerge <- args[2]
+
+# get the number of files to merge
+ntomerge <- length(args)-2
+
+###############################################################################
+#### Read in the first file to merge. It must exist.
+tryCatch({
+    firstmerge.nii <- nifti.image.read(firstmerge);
+}, error=function(e) {
+    cat("Could not read nifti file: ", firstmerge, "\n")
+    stop(e)
+})
+
+###############################################################################
+#### Check to make sure output file does not exist, renaming if it does,
+#### and set up the output file
+if (file.exists(outputfile)) {
+        stop(paste("The output file", outputfile, "exists. Please delete any old results before proceeding."))
+    }
+nim <- nifti.image.copy.info(firstmerge.nii)
+nimdat <- firstmerge.nii[,,]
+
+nifti.image.setdatatype(nim, "NIFTI_TYPE_FLOAT32")
+
+
+###############################################################################
+#### Read in all the files to merge and add them to the output image
+
+while(ntomerge > 0) {
+    idx <- ntomerge+2
+    mim <- nifti.image.read(args[idx])
+    nimdat <- nimdat + mim[,,]
+    ntomerge <- ntomerge -1
+}
+                
+###############################################################################
+#### Write out the merged output image
+nifti.image.alloc.data(nim)
+nim[,,] <- nimdat
+nifti.set.filenames(nim,outputfile)
+nifti.image.write(nim)
