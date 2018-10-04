@@ -14,8 +14,11 @@ npointWriteMakefile <- function(prefix, resultnames, modelfile, designmat, makef
     if (!dir.exists(dir)) {
         dir.create(dir, recursive=TRUE)
     }
-    # the name of one of the outputfiles that is created
-    outputfile <- paste(resultnames[1], ".nii.gz",sep="")
+    # the names of the outputfiles that are created
+    outputfiles <- paste(paste("%", resultnames, ".nii.gz",sep=""),collapse=" ")
+
+    # the first outputfile
+    firstoutputfile <- paste(resultnames[1], ".nii.gz",sep="")
 
     fileConn <- file(localscript)
     writeLines(c("make -j\n"), fileConn)
@@ -33,18 +36,23 @@ npointWriteMakefile <- function(prefix, resultnames, modelfile, designmat, makef
         mostlyclean <- c(mostlyclean, paste("$(masks:%.nii.gz=%", i, ".nii.gz) ",sep=""))
     }
 
-    writeLines(c("export OMP_NUM_THREADS=1",
+    writeLines(c("#Set the number of threads to be 1 to avoid overloading single cores\n",
+                 "export OMP_NUM_THREADS=1",
                  paste("PREFIX=", prefix,sep=""),
-                 paste("OUTPUT=",outputfile,sep=""),
+                 "#All output files are made at the same time so here we only need to list the first.\n",
+                 paste("OUTPUT=",firstoutputfile,sep=""),
                  paste("MODEL=",modelfile,sep=""),
                  paste("DESIGNMAT=",designmat,sep=""),
+                 "# You can change or remove the time command. This is to gauge memory allocation and time to allow for completion on clusters.\n",
+                 "TIME=/usr/bin/time --verbose",
                  "\n",
                  "masks:= $(wildcard $(PREFIX)????.nii.gz)",
                  "outputs:=$(masks:%.nii.gz=%$(OUTPUT))",
                  "\n",
                  paste(alltarget,collapse=" "),
                  "\n",
-                 "%$(OUTPUT): %.nii.gz\n\tnpointrun -m $< --model $(MODEL) -d $(DESIGNMAT)",
+                 "# Because this is a pattern rule, npointrun will be launched only once for all targets.\n",
+                 paste(outputfiles, ": %.nii.gz\n\t$(TIME) npointrun -m $< --model $(MODEL) -d $(DESIGNMAT)"),
                  "\n",
                  allrules,
                  "\n",
