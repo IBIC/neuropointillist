@@ -57,7 +57,12 @@ git clone https://github.com/IBIC/neuropointillist.git
 
 Change into the directory where you have downloaded `neuropointillist`. There will be a subdirectory called `neuropointillist` within that directory; this contains the R package. 
 
-Start R and install the dependencies `argparse`, `Rniftilib`, `doParallel` and `reticulate`. 
+Start R at the `bash` command line.
+
+```bash
+R
+```
+Within R, install the dependencies `argparse`, `Rniftilib`, `doParallel` and `reticulate`. 
 
 ```R
 install.packages("argparse")
@@ -72,12 +77,20 @@ Depending on what version of R you are running, you might also need to install `
 install.packages("nlme")
 ```
 
-
 Once all prerequisites are installed, you can install neuropointillist. Once again, make sure you are in the directory where you downloaded `neuropointillist`, or change into that directory from within R. 
 
 ``` R
 install.packages("neuropointillist", repos=NULL, type="source")
 ```
 
+## Modify Your Path
+
+Finally, put the repository directory that contains the scripts `npoint`, `npointrun` and `npointmerge` into your PATH variable. You can do this on the command line every time you start a new terminal as follows. Make sure you put the path where YOU downloaded the github repository for neuropointillist.
+
+```
+export PATH=$PATH:~/neuropointillist
+```
+
+Alternatively, you can put this line into your `.bashrc` file.
 
 

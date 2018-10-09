@@ -70,3 +70,13 @@ install.packages("neuropointillist", repos=NULL, type="source")
 
 
 
+## Modify Your Path
+
+Finally, put the repository directory that contains the scripts `npoint`, `npointrun` and `npointmerge` into your PATH variable. You can do this on the command line every time you start a new terminal as follows. Make sure you put the path where YOU downloaded the github repository for neuropointillist.
+
+```
+export PATH=$PATH:~/neuropointillist
+```
+
+Alternatively, you can put this line into your `.bashrc` file.
+
