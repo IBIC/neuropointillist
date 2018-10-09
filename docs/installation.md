@@ -1,11 +1,11 @@
 
 # Installation
 
-You will need the R packages `Rniftilib`, `argparse`, and `doParallel` to be installed. 
+This is a brief overview of installation instructions for people who are fairly comfortable installing things on their systems. More detailed instructions for [MacOS](installation-mac.md), [Linux](installation-linux.md), and [Windows 10](installation-windows.md) are also available. 
 
+You will need the R packages `Rniftilib`, `argparse`,  `doParallel` and `reticulate` to be installed. 
 
-
-`argparse` requires Python version >= 2.7 and Python packages `argparse` and `json`. 
+`argparse` requires Python version >= 2.7 and Python packages `argparse`.
 
 **Instructions for installing `Rniftilib` may be found [here.](http://r-forge.r-project.org/R/?group_id=427)**
 
@@ -14,7 +14,6 @@ Note that as of 9/2017, `Rniftilib` is not installing per these instructions. Yo
 ``` R
 install.packages("http://ascopa.server4you.net/ubuntu/ubuntu/pool/universe/r/r-cran-rniftilib/r-cran-rniftilib_0.0-35.r79.orig.tar.xz", repos=NULL)
 ```
-
 
 Once all prerequisites are installed and you have pulled the `neuropointillist` repository, locally install the package. To do this, `cd` into the repository. You will have a `neuropointillist` subdirectory. Start `R` and type
 
