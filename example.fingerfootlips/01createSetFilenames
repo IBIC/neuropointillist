@@ -1,0 +1,5 @@
+#!/bin/bash
+# Create the setfile names from the downloaded data
+
+ls -1 fmri/*-test_task* >   setfilenames1.txt
+ls -1 fmri/*-retest_task* > setfilenames2.txt

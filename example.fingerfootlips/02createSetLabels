@@ -1,0 +1,47 @@
+#!/usr/bin/env Rscript
+# Read in the convolved task regressors and the confounds for each session (test
+# and retest) and write out the setlabels files.
+
+# read in task regressors
+regressors <- read.table("task-fingerfootlips_neuropoint.txt", header=TRUE)
+
+# define our two tasks, test and retest. test is the first "occasion", and
+# retest is the second "occasion"
+tasks <- c("test", "retest")
+
+# define our subjects, zero padding 
+subjects <- sprintf("%02d", 1:10)
+
+# read in all the confounds for each task
+# Using rbind and a loop to do this is sort of inefficient, but it is much
+# easier to understand than the alternatives
+setlabel <- 1
+for (task in tasks) {
+    setlabels <- c()
+    for (subj in subjects) {
+        # The first values for Dvars and fd statistics are "n/a" which is a
+        # string and will screw things up, but we can convert it to an NA upon
+        # reading with the na.strings specification
+        confoundfile <- paste("confounds/sub-", subj, "_ses-", task, "_task-fingerfootlips_bold_confounds.tsv", sep="")
+        confound <- read.table(confoundfile, header=TRUE, na.strings="n/a")
+        # check to make sure that the regressors and confounds have the
+        # same number of entries - one per TR.
+        if (dim(regressors)[1] != dim(confound)[1]) {
+            stop(paste("Number of lines in confound file (", confoundfile, ") does not match the number of lines in the regressors file"))
+        }
+        # add subject, TR, and time (here, occasion) to confounds
+        confound$idnum <- subj
+        confound$TR <- 1:(dim(confound)[1])
+        confound$time <- setlabel
+        # now bind these confounds with the regressors
+        confound <- cbind(regressors, confound)
+        # remove the first TR, which is apparently a dummy scan
+        confound <- confound[-1,]
+        # append to the setlabels
+        setlabels <- rbind(setlabels, confound)
+    }
+    # write out setlabel file
+    write.csv(setlabels, paste("setlabels", setlabel, ".csv",sep=""),row.names=FALSE)
+    setlabel <- setlabel+1
+}
+

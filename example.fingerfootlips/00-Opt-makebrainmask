@@ -1,0 +1,24 @@
+#!/bin/bash
+# this creates the file that is in example.fingerfootlips/mask.nii.gz
+
+# This script uses fsl. But don't worry - if you do not have fsl we
+# have created the mask for you and included it in the repository. This
+# is provided just as an example for how you might do it yourself for another
+# dataset.
+#
+# In other words, you do not actually need to run this script.
+
+# create a temporary file for the intermediate merged images
+tmp=$(mktemp /tmp/allXXXX.nii.gz)
+
+# merge all the brainmasks (we assume that all the brainmask files are here
+# and end with brainmask.nii.gz!!!) in the time dimension
+fslmerge -t ${tmp} *brainmask.nii.gz
+
+# Now take the minimum value along the time dimension, which will be 0 if
+# any one person is missing data for the voxel, and 1 if everyone has data
+# for the voxel
+fslmaths ${tmp} -Tmin mask.nii.gz
+
+# delete temporary file
+rm -f ${tmp}
