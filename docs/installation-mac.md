@@ -8,7 +8,9 @@ You can download R if you do not have it from [CRAN](https://cran.r-project.org/
 
 Macs generally come with Python installed, so you should be fine. You can test to see that you have a Python version >= 2.7 with the following command:
 
-``` python --version```
+```bash
+python --version
+```
 
 If this does not return anything useful, or you are just beginning to
 work with Python and are interested in having a lot of data science
@@ -21,7 +23,9 @@ After your travails, Python should be in your path (you might have to
 start a new terminal window) and you should be able to see what
 version of Python you are running.
 
-```python --version```
+```bash
+python --version
+```
 
 ## Download neuropointillist
 There are two ways to install `neuropointillist`. The first is to download the package as a zip (archive) file from the [Github repository](https://github.com/IBIC/neuropointillist). Here, we pull it using `wget`, unzip it, and rename it to be called `neuropointillist`.
@@ -34,7 +38,9 @@ mv neuropointillist-master neuropointillist
 
 The second way is to clone it using Git. You can install Git for your Linux flavor if it is not installed.
 
-```git clone https://github.com/IBIC/neuropointillist.git```
+```bash
+git clone https://github.com/IBIC/neuropointillist.git
+```
 
 
 ## Install dependencies and neuropointillist
@@ -58,7 +64,7 @@ install.packages("nlme")
 
 Once all prerequisites are installed, you can install neuropointillist. Once again, make sure you are in the directory where you downloaded `neuropointillist`, or change into that directory from within R. 
 
-``` R
+```R
 install.packages("neuropointillist", repos=NULL, type="source")
 ```
 
