@@ -5,5 +5,5 @@ cmdargs <- c("-m","mask_4mm.nii.gz", "--set1", "setfilenames1.txt",
              "--model", "fmrimodel.R",
              "--output", "sgedata/sim.",
              "--debug", "debug.Rdata",
-             "--sgeN", "10")
+             "-p", "2")
              

@@ -2,7 +2,8 @@
 
 #### Make sure packages are installed and load them 
 
-if (!suppressPackageStartupMessages(require(Rniftilib))) install.packages("Rniftilib", repos="http://R-Forge.R-project.org")
+# Rniftilib is not in this location
+#if (!suppressPackageStartupMessages(require(Rniftilib))) install.packages("Rniftilib", repos="http://R-Forge.R-project.org")
 if (!suppressPackageStartupMessages(require(argparse))) install.packages("argparse")
 if (!suppressPackageStartupMessages(require(doParallel))) install.packages("doParallel")
 suppressPackageStartupMessages(library(Rniftilib))

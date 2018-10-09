@@ -21,7 +21,8 @@ npointWriteMakefile <- function(prefix, resultnames, modelfile, designmat, makef
     firstoutputfile <- paste(resultnames[1], ".nii.gz",sep="")
 
     fileConn <- file(localscript)
-    writeLines(c("make -j\n"), fileConn)
+    writeLines(c("make -j 4\n"), fileConn)
+    Sys.chmod(localscript, "775")
 
     fileConn <- file(makefile)
     alltarget <- "all: $(outputs) "

@@ -1,0 +1,25 @@
+#!/bin/bash
+# downloads files needed to run this neuropoint example from openneuro
+# Must have wget installed, and FSL to remove the first volume of the
+# pre-processed data.
+#
+# location of the fMRI prepped data on OpenNeuro
+mkdir -p brainmask fmri confounds
+bucket="http://s3.amazonaws.com/openneuro.outputs/a243dd176d50b0973d013a5a7569787c/db81c46c-1908-4bfd-85b3-9fa1284093ab"
+
+for subj in 01 02 03 04 05 06 07 08 09 10
+    do
+	for session in test retest
+	do
+	    wget ${bucket}/fmriprep/sub-${subj}/ses-${session}/func/sub-${subj}_ses-${session}_task-fingerfootlips_bold_confounds.tsv -O confounds/sub-${subj}_ses-${session}_task-fingerfootlips_bold_confounds.tsv 
+
+	    wget ${bucket}/fmriprep/sub-${subj}/ses-${session}/func/sub-${subj}_ses-${session}_task-fingerfootlips_bold_space-MNI152NLin2009cAsym_brainmask.nii.gz -O brainmask/sub-${subj}_ses-${session}_task-fingerfootlips_bold_space-MNI152NLin2009cAsym_brainmask.nii.gz 
+
+	    wget ${bucket}/fmriprep/sub-${subj}/ses-${session}/func/sub-${subj}_ses-${session}_task-fingerfootlips_bold_space-MNI152NLin2009cAsym_preproc.nii.gz -O fmri/sub-${subj}_ses-${session}_task-fingerfootlips_bold_space-MNI152NLin2009cAsym_preproc.nii.gz
+
+	    # remove the first volume of the pre-processed data, a dummy scan
+	    fslroi fmri/sub-${subj}_ses-${session}_task-fingerfootlips_bold_space-MNI152NLin2009cAsym_preproc.nii.gz	    fmri/sub-${subj}_ses-${session}_task-fingerfootlips_bold_space-MNI152NLin2009cAsym_preproc.nii.gz  1 -1
+	done
+done
+
+

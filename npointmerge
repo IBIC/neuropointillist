@@ -2,7 +2,8 @@
 
 #### Make sure packages are installed and load them 
 
-if (!suppressPackageStartupMessages(require(Rniftilib))) install.packages("Rniftilib", repos="http://R-Forge.R-project.org")
+#rniftilib is not in this location
+#if (!suppressPackageStartupMessages(require(Rniftilib))) install.packages("Rniftilib", repos="http://R-Forge.R-project.org")
 suppressPackageStartupMessages(library(Rniftilib))
 
 # collect arguments
@@ -39,7 +40,8 @@ if (file.exists(outputfile)) {
 nim <- nifti.image.copy.info(firstmerge.nii)
 nimdat <- firstmerge.nii[,,]
 
-nifti.image.setdatatype(nim, "NIFTI_TYPE_FLOAT32")
+# hide output from this command, which is confusing
+invisible(capture.output(nifti.image.setdatatype(nim, "NIFTI_TYPE_FLOAT32")))
 
 
 ###############################################################################
