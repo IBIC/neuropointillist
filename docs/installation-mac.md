@@ -26,10 +26,11 @@ version of Python you are running.
 ## Download neuropointillist
 There are two ways to install `neuropointillist`. The first is to download the package as a zip (archive) file from the [Github repository](https://github.com/IBIC/neuropointillist). Here, we pull it using `wget`, unzip it, and rename it to be called `neuropointillist`.
 
-```wget https://github.com/IBIC/neuropointillist/archive/master.zip
+```bash 
+wget https://github.com/IBIC/neuropointillist/archive/master.zip
 unzip master.zip
 mv neuropointillist-master neuropointillist
-``
+```
 
 The second way is to clone it using Git. You can install Git for your Linux flavor if it is not installed.
 
@@ -42,14 +43,18 @@ Change into the directory where you have downloaded `neuropointillist`. There wi
 
 Start R and install the dependencies `argparse`, `Rniftilib`, `doParallel` and `reticulate`. 
 
-> install.packages("argparse")
+```R
+install.packages("argparse")
 install.packages("http://ascopa.server4you.net/ubuntu/ubuntu/pool/universe/r/r-cran-rniftilib/r-cran-rniftilib_0.0-35.r79.orig.tar.xz", repos=NULL)
-> install.packages("doParallel")
-> install.packages("reticulate")
+install.packages("doParallel")
+install.packages("reticulate")
+```
 
 Depending on what version of R you are running, you might also need to install `nlme`.
-> install.packages("nlme")
 
+```R
+install.packages("nlme")
+```
 
 Once all prerequisites are installed, you can install neuropointillist. Once again, make sure you are in the directory where you downloaded `neuropointillist`, or change into that directory from within R. 
 
