@@ -156,7 +156,7 @@ Y <- voxeldat[,v]
 ```
 
 ## Flournoy example (longitudinal)
-While the code for this example is included in this repository, the data is not released, and is available to people within IBIC. If you are not able to access the data, you can download a simulated data set with the same file structure from the [Neuropointillist example data](https://osf.io/kqtj7/) repository on OSF (the zip file is roughly 700 MB). This is a longitudinal example using the parameter estimates from first level analyses using standard fMRI software. 
+While the code for this example is included in this repository, the data is not released, and is available to people within IBIC. If you are not able to access the data, you can download a simulated data set with the same file structure from the [Neuropointillist example data](https://osf.io/kqtj7/files/) repository on OSF (the zip file is roughly 700 MB). This is a longitudinal example using the parameter estimates from first level analyses using standard fMRI software. 
 
 ### Quick start.
 
