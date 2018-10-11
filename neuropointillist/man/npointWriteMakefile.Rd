@@ -4,7 +4,8 @@
 \alias{npointWriteMakefile}
 \title{Write an output makefile}
 \usage{
-npointWriteMakefile(prefix, resultnames, modelfile, designmat, makefile)
+npointWriteMakefile(prefix, resultnames, modelfile, designmat, makefile,
+  localscript)
 }
 \arguments{
 \item{prefix}{Prefix for output, to be prepended to outputs}
@@ -16,8 +17,9 @@ npointWriteMakefile(prefix, resultnames, modelfile, designmat, makefile)
 \item{designmat}{Design matrix}
 
 \item{makefile}{Name of makefile}
+
+\item{localscript}{Name of script to execute makefile locally}
 }
 \description{
 Generate a makefile for running a specific analysis
 }
-

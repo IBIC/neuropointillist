@@ -12,4 +12,3 @@ npointWarnIfNiiFileExists(filename)
 \description{
 Warn if a nifti file exists, and rename it if it does
 }
-

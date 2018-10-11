@@ -15,6 +15,6 @@ npointWriteFile(mask, voxeldata, outputfilename)
 }
 \description{
 Take a vector of voxel data and a mask and reassemble it into
-an output NifTI file.
+an output NifTI file. Make sure that the output file is floating point
+or nasty truncation can occur. You want floats, right?
 }
-

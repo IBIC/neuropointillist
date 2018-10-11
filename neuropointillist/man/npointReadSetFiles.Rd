@@ -14,4 +14,3 @@ return args Modified argument structure, with set files replaced with actual lis
 Read in the files that are in each data set and put them into the args
 structure.
 }
-

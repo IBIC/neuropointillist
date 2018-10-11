@@ -18,4 +18,3 @@ npointSplitDataSize(size, voxeldat, prefix, mask)
 \description{
 Split an input mask and data into chunks of the specified size.
 }
-
