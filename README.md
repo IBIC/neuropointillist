@@ -17,15 +17,13 @@ The `neuropointillist` package has functions to combine multiple
 sets of neuroimaging data, run arbitrary R code (a "model") on each
 voxel in parallel, output results, and reassemble the data. Included
 are three standalone programs. `npoint` and `npointrun` use the
-`neuropointillist` package, and `npointmerge` uses FSL commands to
-reassemble results.
+`neuropointillist` package, and `npointmerge` uses reassembles results.
+
 
 There are some examples included in this package that use data that we
 cannot release. These are useful only for looking at modeling code or
 for inspiration. However, we have simulated two timepoints of fMRI
 data and have a complete example and a worked vignette.
 
-
-
-
+Please direct all comments and complaints to Tara Madhyastha (madhyt@uw.edu).
 
