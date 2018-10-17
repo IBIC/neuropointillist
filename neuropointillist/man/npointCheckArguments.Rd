@@ -16,4 +16,3 @@ args Modified argument structure, with set files replaced with actual list of fi
 Check input arguments. At least one data set must be provided, and only
 one method of parallelization should be specified
 }
-

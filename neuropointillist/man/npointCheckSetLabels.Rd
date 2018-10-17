@@ -14,4 +14,3 @@ npointCheckSetLabels(set, setlabels)
 \description{
 Argument checking to make sure there are labels for each data set.
 }
-

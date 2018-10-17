@@ -18,4 +18,3 @@ This function takes an argument structure that specifies all the parameters
 that should be input to npointillist and returns an array of voxel data and
 a design matrix.
 }
-

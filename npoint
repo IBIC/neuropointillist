@@ -33,6 +33,7 @@ parser$add_argument("--debugfile", nargs=1, type="character", help="Save voxelda
 parser$add_argument("-t", "--testvoxel", type="integer", help="Specify a voxel on which the model works to determine output files", default="-1")
 parser$add_argument("-p", "--processors", type="integer", help="Run using shared memory with p processors")
 parser$add_argument("--sgeN",  type="integer", nargs=1, help="Run using SGE generating N jobs")
+parser$add_argument("--slurmN",  type="integer", nargs=1, help="Run using Slurm generating N jobs")
 
 if (file.exists("readargs.R")) {
     source("readargs.R")
@@ -76,10 +77,25 @@ origargs <- args
 args <- npointCheckArguments(args)
 
 #### Are we running in parallel?
-if (!is.null(args$processors) || !is.null(args$sgeN)) {
+if (!is.null(args$processors) || !is.null(args$sgeN) || !is.null(args$slurmN)) {
     runningParallel =TRUE
 } else {
     runningParallel= FALSE
+}
+
+#### If we are writing out files for a scheduler, identify the number of files
+nSchedulerJobs <- -1 # for sanity
+if (runningParallel) {
+    if (!is.null(args$sgeN)) {
+        nSchedulerJobs <- args$sgeN
+    } else if (!is.null(args$slurmN)) {
+        nSchedulerJobs <- args$slurmN
+    }
+   # did someone specify both sge and slurm?
+    if (!is.null(args$sgeN) && !is.null(args$slurmN)) {
+        message("You tried to specify both sge and slurm driver files. You can only specify one at a time.")
+        message("I'm defaulting to SGE. If you want Slurm, use only the --slurmN flag.")
+    }
 }
 
 
@@ -178,36 +194,54 @@ if (runningParallel) {
         stopCluster(cl)
         npointWriteOutputFiles(args$output,results,mask)
         npointWriteCallingInfo(origargs)
-    } else { # we are using SGE
+    } else { # we are using SGE or SLURM
+      # save the design matrix
+        designmatname <- paste(args$output, "designmat.rds", sep="")
+        makefilename <- paste(dirname(args$output), "/Makefile", sep="")
+        masterscript.local <- paste(dirname(args$output), "/runme.local", sep="")
+        saveRDS(designmat,designmatname)
+        attach(designmat) # attach to the designmat
+                        # test one voxel to obtain names for return vals
+        if (args$testvoxel < 0) {
+            args$testvoxel <- trunc(dim(voxeldat)[2]/2)
+                                                 }
+        tryCatch({ out <- processVoxel(args$testvoxel)},error=function(e) {
+            message("error testing the model on a random voxel to determine output filenames")
+            message("try providing the -t option to give a specific voxel for testing")
+            message(e)
+            stop("Exiting before generating makefile.")})
+        npointWriteMakefile(basename(args$output), names(out), paste(getwd(), "/",args$model,sep=""), basename(designmatname), makefilename, masterscript.local)
+
+
+       # do sanity check to make sure we obtained the number of jobs
+        if (nSchedulerJobs < 0) {
+            stop("Number of scheduler jobs incorrectly specified.")
+        }
         # split up the data into chunks and write out scripts to process
-        if (args$sgeN > nvertices) {
-            stop("Number of SGE jobs requested is greater than the number of vertices")
+        if (nSchedulerJobs > nvertices) {
+            stop("Number of scheduler jobs requested is greater than the number of vertices")
         } else {
           cat("no. of vertices", nvertices, "\n")
           #sgeN * size is now larger than the # of vertices
-  	  size <- ceiling(nvertices/args$sgeN)
-          cat("size", trunc(nvertices/args$sgeN), "\n")
+  	  size <- ceiling(nvertices/nSchedulerJobs)
+          cat("size", trunc(nvertices/nSchedulerJobs), "\n")
           njobs <- npointSplitDataSize(size,voxeldat,args$output,mask)
           cat("no. of jobs", njobs ,"\n")
-          # save the design matrix
-          designmatname <- paste(args$output, "designmat.rds", sep="")
-          makefilename <- paste(dirname(args$output), "/Makefile", sep="")
-          masterscript.local <- paste(dirname(args$output), "/runme.local", sep="")
-          masterscript.sge <- paste(dirname(args$output), "/runme.sge", sep="")
-          jobscript <- paste(dirname(args$output), "/sgejob.bash", sep="")
-          saveRDS(designmat,designmatname)
-          attach(designmat) # attach to the designmat
-                        # test one voxel to obtain names for return vals
-          if (args$testvoxel < 0) {
-              args$testvoxel <- trunc(dim(voxeldat)[2]/2)
-                                                 }
-          tryCatch({ out <- processVoxel(args$testvoxel)},error=function(e) {
-              message("error testing the model on a random voxel to determine output filenames")
-              message("try providing the -t option to give a specific voxel for testing")
-              message(e)
-          stop("Exiting before generating makefile.")})
-          npointWriteMakefile(basename(args$output), names(out), paste(getwd(), "/",args$model,sep=""), basename(designmatname), makefilename, masterscript.local)
-          npointWriteSGEsubmitscript(basename(args$output), names(out), paste(getwd(), "/",args$model,sep=""), basename(designmatname), masterscript.sge,jobscript, njobs)
+
+
+          if (!is.null(args$sgeN)) {
+              masterscript.scheduler <- paste(dirname(args$output), "/runme.sge", sep="")
+              jobscript <- paste(dirname(args$output), "/sgejob.bash", sep="")
+              npointWriteSGEsubmitscript(basename(args$output), names(out), paste(getwd(), "/",args$model,sep=""), basename(designmatname), masterscript.scheduler,jobscript, njobs)
+            
+          } else if (!is.null(args$slurmN)) {
+              masterscript.scheduler <- paste(dirname(args$output), "/runme.slurm", sep="")
+              jobscript <- paste(dirname(args$output), "/slurmjob.bash", sep="")
+              npointWriteSlurmsubmitscript(basename(args$output), names(out), paste(getwd(), "/",args$model,sep=""), basename(designmatname), masterscript.scheduler,jobscript, njobs)              
+          } else {
+              # We better not get here
+              stop("Cannot identify which scheduler to output")
+          }
           npointWriteCallingInfo(origargs)
       }
     }

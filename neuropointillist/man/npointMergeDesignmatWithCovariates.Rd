@@ -17,4 +17,3 @@ npointMergeDesignmatWithCovariates(desigmat, covariatefile, voxeldatdim)
 Take the assembled design matrix and merge it with any covariates, making
 sure that the output is reasonable.
 }
-

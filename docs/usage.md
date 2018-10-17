@@ -1,7 +1,7 @@
 # npoint
 ## Usage
 `npoint --set1 listoffiles1.txt --setlabels1 file1.csv --set2 listoffiles2.txt  --setlabels2 file2.csv`
-`--covariates covariatefile.csv  --mask mask.nii.gz --model code.R  [ -p N | --sgeN N] --output output`
+`--covariates covariatefile.csv  --mask mask.nii.gz --model code.R  [ -p N | --sgeN N | --slurmN ] --output output`
 `--debugfile outputfile `
 
 If a file called `readargs.R` exists that sets a vector called `cmdargs`, this file will be read to obtain the arguments for `npoint` instead of taking them from the command line. This is intended to make it a little easier to remember the long lists of arguments. 
@@ -30,7 +30,9 @@ The setlabel files are csv files that specify variables that correspond to the f
 
 `-p x` The `-p` argument specifies that multicore parallelism will be implemented using `x` processors. An warning is given if the number of processors specified exceeds number of cores. **See notes below on running a model using multicore parallelism.**
 
-`--sgeN N` Alternatively, the `--sge` argument specifies to read the data and divide it into `N` jobs that can be submitted to  the SGE (using a script that is generated called, suggestively, `runme`) or divided among machines by hand and run using GNU make. If SGE parallelism is used, we assume that the directory that the program is called from is read/writeable from all cluster nodes. **See notes below on running a model using SGE parallelism.**
+`--sgeN N` The `--sgeN` argument specifies to read the data and divide it into `N` jobs that can be submitted to  the SGE (using a script that is generated called, suggestively, `runme.sge`) or divided among machines by hand and run using GNU make. If SGE parallelism is used, we assume that the directory that the program is called from is read/writeable from all cluster nodes. **See notes below on running a model using SGE parallelism.**
+
+`--slurmN N` The `--slurmN` argument specifies to read the data and divide it into `N` jobs that can be submitted to a Slurm scheduler (using a script that is generated called, suggestively, `runme.slurm`) or divided among machines by hand and run using GNU make. If Slurm is used, the template file **slurmjob.bash** must be edited!!! Unlike SGE, Slurm works best if you give good estimates of the time your program will take to run, the amount of memory it needs, and if you select the number of jobs to make each one not very small. The file that is written is currently a template based on Harvard's cluster configuration. Like with SGE, we assume that the directory that the program is called from is read/writeable from all cluster nodes. At the risk of oversharing, Slurm's name derives from Simple Linux Utility for Resource Management, but I find it rather funny to sound it out in my head as I have been adding this feature. **See notes below on running a model using the Slurm Workload Manager.**
 
 `--output` Specify an output prefix that is prepended to output files. This is useful for organizing output for SGE runs; you can specify something like `--output model-stressXtime/mod1` to organize all the output files and execution scripts into a subdirectory. In addition, the model that you used and the calling arguments will be copied with this prefix so that you can remember what you ran. This is modeled off of how FSL FEAT copies the .fsf file into the FEAT directory (so simple and so handy)! (**required**)
 
@@ -60,11 +62,45 @@ different machines.
 
 The `readargs.R` file in `example.rawfmri` is configured so that it will create a directory called `sgetest` with the assembled design matrix file (in rds format), the split up fMRI data (also in rds format), and files to run the job. These files are:
 
-`Makefile` This file contains the rules for running each subjob and assembling the results. Note that the executables `npointrun` and `npointmerge` must be in your path environment. You can run your job by typing `make -j <ncores>` at the command line in the `sgetest` directory, or by calling the script `runme.local`. You can also type `make mostlyclean` to remove all the intermediate files once your job has completed and you have reassembled your output (by any method). If instead you type `make clean`, you can remove all the rds files also. 
+`Makefile` This file contains the rules for running each subjob and assembling the results. Note that the executables `npointrun` and `npointmerge` must be in your path environment. You can run your job by typing `make -j <ncores>` at the command line in the `sgetest` directory, or by calling the script `runme.local`, which will use 4 cores by default. You can also type `make mostlyclean` to remove all the intermediate files once your job has completed and you have reassembled your output (by any method). If instead you type `make clean`, you can remove all the rds files also. 
 
 `sgejob.bash` This is the job submission script for processing the data using SGE. Note that `npointrun` needs to be in your path. The commands in the job submission script are bash commands.
 
 `runme.sge` This script will submit the job to the SGE and call Make to merge the resulting files when the job has completed. It is an SGE/Make hybrid.
+
+## Running a model using the Slurm Workload Manager
+
+
+`Makefile` This file contains the rules for running each subjob and
+assembling the results. Note that the executables `npointrun` and
+`npointmerge` must be in your path environment. You can run your job
+by typing `make -j <ncores>` at the command line, or by calling the script `runme.local`, which will use 4 cores by default. You can also type
+`make mostlyclean` to remove all the intermediate files once your job
+has completed and you have reassembled your output (by any method). If
+instead you type `make clean`, you can remove all the rds files also.
+
+`slurmjob.bash` This is the job submission script for submitting the
+job to the Slurm Workload Manager. **Note that you must edit this file
+before submitting the job.** The defaults that are written here
+probably won't work for you; they are modeled after Harvard's NCF
+cluster and should be thought of as placeholders. The first thing to
+change is the partition, which is set to `ncf_holy` by default. You
+will need to change this to a partition that you have access to on
+your Slurm system. Next, you need to give a good estimate for the
+amount of memory, in MB, your job will use (`--mem`). You can get a
+reasonable estimate by running `make` on your local machine to run one
+job sequentially. The `time` command will give you statistics on how
+much memory each job uses. Assuming your jobs are approximately the
+same size, you should be able to double this and use that figure as an
+estimate. You also need to provide an estimate for the time you expect
+each job to take; it will be terminated if the job does not complete
+within that time.
+
+`runme.slurm` This script will submit the job to the Slurm Workload
+manager. The job is an array job that includes as many tasks as you
+specified. You will get an email when your job has completed. At that
+point, you can then come back to this directory and type `make` to
+merge the output files.
 
 ## Running a model using multicore parallelism
 

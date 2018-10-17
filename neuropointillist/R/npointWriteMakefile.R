@@ -23,6 +23,7 @@ npointWriteMakefile <- function(prefix, resultnames, modelfile, designmat, makef
     fileConn <- file(localscript)
     writeLines(c("make -j 4\n"), fileConn)
     Sys.chmod(localscript, "775")
+    close(fileConn)
 
     fileConn <- file(makefile)
     alltarget <- "all: $(outputs) "
@@ -60,4 +61,6 @@ npointWriteMakefile <- function(prefix, resultnames, modelfile, designmat, makef
                  paste(mostlyclean,collapse=""),
                  clean),
                fileConn)
+    close(fileConn)
+
 }
