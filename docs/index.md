@@ -14,6 +14,7 @@ This code will make it so that when you type `npoint` or `npointrun` at the comm
 For detailed usage information, see the [Usage](usage.md). If you just want to get going, read on!
 
 ## fmri Example
+
 ### Quick start.
 
 Go into the directory `example.rawfmri`. This example has simulated fMRI data for 8 subjects, two sessions each. 
@@ -154,15 +155,18 @@ attach(designmat)
 Y <- voxeldat[,v]
 ```
 
-## IBIC Internal - Flournoy example
-While the code for this example is included in this repository, the data is not released, and is available to people within IBIC. If you are not able to access the data, the models and description of the examples may still be of interest. This is a longitudinal example using the parameter estimates from first level analyses using standard fMRI software. 
+## Flournoy example (longitudinal)
+While the code for this example is included in this repository, the data is not released, and is available to people within IBIC. If you are not able to access the data, you can download a simulated data set with the same file structure from the [Neuropointillist example data](https://osf.io/kqtj7/files/) repository on OSF (the zip file is roughly 700 MB). This is a longitudinal example using the parameter estimates from first level analyses using standard fMRI software. 
 
 ### Quick start.
+
+If you downloaded a zip file with the simulated SFIC data from OSF, unzip that file and note the location of the directory. It will probably be called `sfic`.
+
 Go into the directory `example.flournoy`. 
 
 `cd example.flournoy`
 
-Ask someone where to find the `sfic` directory that has the data you need to run this example (it is not on github). Copy that directory into the `example.flournoy` directory:
+Copy the directory with the real or simulated SFIC data files to the into the `example.flournoy` directory:
 
 `cp -r /path/to/sfic sfic`
 
@@ -192,7 +196,7 @@ When you get your command prompt back, you should have four files (in addition t
 ### What it means.
 
 This is an example of longitudinal fMRI task data from John Flournoy
-and Jennifer Pfeiffer. Adolescents were scanned at 3 waves (mean age
+and Jennifer Pfeifer. Adolescents were scanned at 3 waves (mean age
 10, 13, and 16) while making evaluations of self and other in the
 social and academic domains. The “other” target was a fictional
 character, Harry Potter, about whom participants all had substantial
@@ -310,7 +314,7 @@ processVoxel <-function(v) {
 ```
 
 
-### Using Lavaan.
+### Lavaan example (SEM parallel growth).
 Using the same data set as above, you can see how one might implement a parallel growth model with the R package `lavaan`. An example model is in `example.lavaan`.
 
 ``` R
