@@ -132,3 +132,11 @@ Merge some number of files by summing them
 
 ## Usage
 `npointmerge output <list of files>`
+
+# npointprewhiten
+
+Prewhitens 4D fMRI data by fitting a linear trend and an AR(2) model. Prewhitening is necessary to use `lme4` because the package does not support specifying an autocorrelation structure in the data. I make no claims that this is a good way, and certainly not the best way, to prewhitenen the data but it is provided as a start for the fMRI examples.
+
+## Usage
+`npointprewhiten inputfile.nii.gz outputfile.nii.gz mask.nii.gz`
+
