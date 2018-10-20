@@ -90,11 +90,16 @@ your Slurm system. Next, you need to give a good estimate for the
 amount of memory, in MB, your job will use (`--mem`). You can get a
 reasonable estimate by running `make` on your local machine to run one
 job sequentially. The `time` command will give you statistics on how
-much memory each job uses. Assuming your jobs are approximately the
-same size, you should be able to double this and use that figure as an
+much memory each job uses. You would probably want to look at the
+Maximum resident set size, which is given in KB (divide by about 1000
+to obtain MB). Assuming your jobs are approximately the same size, you
+should be able to double or triple this and use that figure as an
 estimate. You also need to provide an estimate for the time you expect
 each job to take; it will be terminated if the job does not complete
-within that time.
+within that time. You can look at the elapsed wall clock time to get
+this estimate. The cluster might be slower on a single job than your
+desktop, so make sure to multiply this wall clock time to provide an
+estimate for the cluster.
 
 `runme.slurm` This script will submit the job to the Slurm Workload
 manager. The job is an array job that includes as many tasks as you
