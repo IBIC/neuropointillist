@@ -1,0 +1,110 @@
+#!/usr/bin/env Rscript
+# This code is based off R/detrend.R from the fmri R package
+
+# load  rniftilib
+suppressPackageStartupMessages(library(Rniftilib))
+
+# load psd
+suppressPackageStartupMessages(library(psd))
+
+# collect arguments
+args <- commandArgs(TRUE)
+
+#library(pracma)
+
+if (length(args) != 3) {
+    stop("Usage: npprewhiten inputfile.nii.gz prewhitenedoutput.nii.gz mask.nii.gz")
+}
+
+# get name of inputfile
+inputfile <- args[1]
+
+# get name of outputfile
+outputfile <- args[2]
+
+# get name of mask
+mask <- args[3]
+
+
+###############################################################################
+#### Read in the first file to merge. It must exist.
+tryCatch({
+    inputfile.nii <- nifti.image.read(inputfile);
+}, error=function(e) {
+    cat("Could not read nifti file: ", inputfile, "\n")
+    stop(e)
+})
+
+###############################################################################
+#### Check to make sure output file does not exist, renaming if it does,
+#### and set up the output file
+if (file.exists(outputfile)) {
+        stop(paste("The output file", outputfile, "exists. Please delete any old results before proceeding."))
+    }
+
+###############################################################################
+#### read mask, aborting if it does not exist
+tryCatch({
+    mask.nii <-  nifti.image.read(mask);
+    mask.dat <- mask.nii[,,]
+}, error=function(e) {
+    cat("Could not read mask file: ", mask, "\n")
+    stop(e)
+})
+
+
+###############################################################################
+#### start trend removal
+
+# This is taken from R/detrend.R
+#https://rdrr.io/cran/fmri/src/R/detrend.R
+
+# AR level is 2 - should probably be higher and we can do a lot better
+ar <- 2
+
+dimttt <- dim(inputfile.nii)
+ttt <- inputfile.nii[,,,]
+if (length(dimttt) != 4) {
+    stop("Detrending only works on 4D data.")
+}
+n <- dimttt[4]
+
+dim(ttt) <- c(prod(dimttt[1:3]),dimttt[4])
+
+zerovar <- mask.dat
+dim(zerovar) <- c(prod(dimttt[1:3]))
+zerovar[mask.dat > 0] <- apply(ttt[mask.dat>0,],1,var)
+missing <- zerovar[mask.dat > 0]==0
+if (sum(missing) > 0) {
+    warning(paste("Warning: There are", sum(missing), "voxels with zero variance (with no data) in your fMRI data that are not masked out. Adding to mask, but this might affect your model."))
+    mask.dat[mask.dat > 0] <-   (missing!=TRUE)
+}
+
+# prewhiten, checking the variance of the data in the mask because it seems
+# as if there are some voxels at the edge with zero variance 
+ttt[mask.dat>0,] <- apply(ttt[mask.dat>0,], 1, function(x) {prewhiten(x,AR.max=ar,detrend=TRUE,demean=TRUE,plot=FALSE,verbose=FALSE)$prew_ar})
+
+# zero outside of mask
+zerodat <- rep(0,n)
+ttt[mask.dat==0] <- zerodat 
+dim(ttt) <- dimttt
+cat("Finished linear trend removal and prewhitening")
+                
+###############################################################################
+#### Write out the merged output image
+output.nii <- nifti.image.copy.info(inputfile.nii)
+ # hide output from this command, which is confusing
+invisible(capture.output(nifti.image.setdatatype(output.nii, "NIFTI_TYPE_FLOAT32")))
+nifti.image.alloc.data(output.nii)
+output.nii[,,,] <- ttt
+nifti.set.filenames(output.nii,outputfile)
+nifti.image.write(output.nii)
+
+
+
+
+        
+                
+
+
+
