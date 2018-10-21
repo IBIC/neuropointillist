@@ -171,7 +171,7 @@ In the `example.fingerfootlips` directory, run this script:
 `03prewhiten`
 
 This takes some time to run and is not parallelized; I suggest starting it before you leave for the day. This will create the directory `fmri.prewhiten`. Data
-here are prewhitened using AFNI `3dREMLfit` with a default column matrix of 1s as described [in this posting] (https://afni.nimh.nih.gov/afni/community/board/read.php?1,84268,158612#msg-158612). There may be better ways to do this; for example, see the procedure that
+here are prewhitened using AFNI `3dREMLfit` with a default column matrix of 1s as described [in this posting](https://afni.nimh.nih.gov/afni/community/board/read.php?1,84268,158612#msg-158612). There may be better ways to do this; for example, see the procedure that
 [Mandy Mejia recommends](https://mandymejia.wordpress.com/2016/11/06/how-to-efficiently-prewhiten-fmri-timeseries-the-right-way/). 
 
 However, the data created in `fmri.prewhiten` are used in subsequent models to produce what I think should be more realistic parameter estimates.
@@ -194,7 +194,8 @@ If you run `npoint`, this  will create the output directory lmer.prewhitened. As
 
 The model is listed below.
 
-`r
+```r
+
 library(lme4)
 
 library(lmerTest)
@@ -230,13 +231,13 @@ processVoxel <-function(v) {
     retvals
 }
 
-`
+```
 
 ## An Intraclass Correlation.
 
 This is an example that calculates the ICC as the within-subject variance divided by the total variance. Note that this example illustrates one of the 
 
-`r
+```r
 library(lme4)
 
 library(lmerTest)
@@ -263,4 +264,4 @@ processVoxel <-function(v) {
     retvals
 }
 
-`
+```
