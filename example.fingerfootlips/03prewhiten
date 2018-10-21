@@ -1,0 +1,13 @@
+#!/bin/bash
+# detrends and removes autocorrelations using an AR(2) model
+#
+mkdir -p fmri.prewhitened
+for subj in 01 02 03 04 05 06 07 08 09 10
+    do
+	for session in test retest
+	do
+	    3dREMLfit -input fmri/sub-${subj}_ses-${session}_task-fingerfootlips_bold_space-MNI152NLin2009cAsym_preproc.nii.gz -Rwherr fmri.prewhitened/sub-${subj}_ses-${session}_task-fingerfootlips_bold_space-MNI152NLin2009cAsym_preproc.nii.gz -mask mask.nii.gz
+	done
+done
+
+

@@ -1,0 +1,10 @@
+fmri.prewhitened/sub-01_ses-retest_task-fingerfootlips_bold_space-MNI152NLin2009cAsym_preproc.nii.gz
+fmri.prewhitened/sub-02_ses-retest_task-fingerfootlips_bold_space-MNI152NLin2009cAsym_preproc.nii.gz
+fmri.prewhitened/sub-03_ses-retest_task-fingerfootlips_bold_space-MNI152NLin2009cAsym_preproc.nii.gz
+fmri.prewhitened/sub-04_ses-retest_task-fingerfootlips_bold_space-MNI152NLin2009cAsym_preproc.nii.gz
+fmri.prewhitened/sub-05_ses-retest_task-fingerfootlips_bold_space-MNI152NLin2009cAsym_preproc.nii.gz
+fmri.prewhitened/sub-06_ses-retest_task-fingerfootlips_bold_space-MNI152NLin2009cAsym_preproc.nii.gz
+fmri.prewhitened/sub-07_ses-retest_task-fingerfootlips_bold_space-MNI152NLin2009cAsym_preproc.nii.gz
+fmri.prewhitened/sub-08_ses-retest_task-fingerfootlips_bold_space-MNI152NLin2009cAsym_preproc.nii.gz
+fmri.prewhitened/sub-09_ses-retest_task-fingerfootlips_bold_space-MNI152NLin2009cAsym_preproc.nii.gz
+fmri.prewhitened/sub-10_ses-retest_task-fingerfootlips_bold_space-MNI152NLin2009cAsym_preproc.nii.gz

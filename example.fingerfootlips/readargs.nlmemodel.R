@@ -1,9 +1,9 @@
-cmdargs <- c("-m","mask_4mm.nii.gz", "--set1", "setfilenames1.txt",
+cmdargs <- c("-m","mask.nii.gz", "--set1", "setfilenames1.txt",
              "--set2", "setfilenames2.txt",             
              "--setlabels1", "setlabels1.csv",
              "--setlabels2", "setlabels2.csv",             
-             "--model", "fmrimodel.R",
-             "--output", "sgedata/sim.",
+             "--model", "nlmemodel.R",
+             "--output", "nlmemodel/n.",
              "--debug", "debug.Rdata",
-             "--sgeN", "10")
+             "--sgeN", "50")
              
