@@ -130,19 +130,19 @@ processVoxel <-function(v) {
         contr <- c(0, 1, 0, 0, 0, 0,0,0,0,0,0)
         out <- anova(mod,L=contr)
         finger.t.stat <- (t(contr)%*%mod$coefficients$fixed)/sqrt(t(contr)%*%vcov(mod)%*%contr)
-        finger.p <- 1-pt(finger.t.stat,df=out$denDF)
+        finger.p<-1-out$"p-value"        
 
         #foot contrast
         contr <- c(0, 0, 1, 0, 0, 0,0,0,0,0,0)
         out <- anova(mod,L=contr)
         foot.t.stat <- (t(contr)%*%mod$coefficients$fixed)/sqrt(t(contr)%*%vcov(mod)%*%contr)
-        foot.p <- 1-pt(foot.t.stat,df=out$denDF)
+        foot.p <- 1-out$"p-value"        
 
         #lips contrast
         contr <- c(0, 0, 0, 1, 0, 0,0,0,0,0,0)
         out <- anova(mod,L=contr)
         lips.t.stat <- (t(contr)%*%mod$coefficients$fixed)/sqrt(t(contr)%*%vcov(mod)%*%contr)
-        lips.p <- 1-pt(lips.t.stat,df=out$denDF)                
+        lips.p <- 1-out$"p-value"        
 
         retvals <- list(finger.t.stat, finger.p, foot.t.stat, foot.p, lips.t.stat, lips.p)
 
@@ -154,6 +154,8 @@ processVoxel <-function(v) {
     names(retvals) <- c("finger.tstat", "finger.p", "foot.tstat", "foot.p", "lips.tstat", "lips.p")
     retvals
 }
+
+
 ```
 
 ### Prewhitening.  
