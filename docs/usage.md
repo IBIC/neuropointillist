@@ -127,7 +127,7 @@ merge the output files.
 ## Running a model using PBS Torque
 
 `Makefile` This file contains the rules for running each subjob and
-assembling the results. See description of the `Makefile` in *Running a model using SGE parallelism*, above.
+assembling the results. See description of the `Makefile` in **Running a model using SGE parallelism**, above.
 
 `pbsjob.bash` This is the job submission script for submitting the job
 to PBS. **Note that you must edit this file before submitting the
