@@ -3,7 +3,6 @@
 export(npointCheckArguments)
 export(npointMergeDesignmatWithCovariates)
 export(npointReadDataSets)
-export(npointReadDataSetsOutOfCore)
 export(npointSplitDataSize)
 export(npointWriteCallingInfo)
 export(npointWriteMakefile)
