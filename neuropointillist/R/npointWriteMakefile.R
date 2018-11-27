@@ -38,6 +38,24 @@ npointWriteMakefile <- function(prefix, resultnames, modelfile, designmat, makef
         mostlyclean <- c(mostlyclean, paste("$(masks:%.nii.gz=%", i, ".nii.gz) ",sep=""))
     }
 
+    systemname <- Sys.info()["sysname"]
+    msrelease <- grep("Microsoft", Sys.info()["release"])
+    if (systemname=="Linux") {
+        # if we are on Microsoft UNIX don't time
+        if (length(msrelease) > 0) {
+            timecommand <- ""
+       # if anything else we are ok
+        } else {
+            timecommand <- "/usr/bin/time --verbose"
+        }
+    } else if (systemname=="Darwin") {
+       # mac uses the -l flag
+        timecommand <- "/usr/bin/time -l"
+    } else {
+        # if we can't figure it out don't do anything
+        timecommand <- ""        
+    }
+    
     writeLines(c("#Set the number of threads to be 1 to avoid overloading single cores\n",
                  "export OMP_NUM_THREADS=1",
                  paste("PREFIX=", prefix,sep=""),
@@ -46,7 +64,7 @@ npointWriteMakefile <- function(prefix, resultnames, modelfile, designmat, makef
                  paste("MODEL=",modelfile,sep=""),
                  paste("DESIGNMAT=",designmat,sep=""),
                  "# You can change or remove the time command. This is to gauge memory allocation and time to allow for completion on clusters.\n",
-                 "TIME=/usr/bin/time --verbose",
+                 paste("TIME=", timecommand, sep=""),
                  "\n",
                  "masks:= $(wildcard $(PREFIX)????.nii.gz)",
                  "outputs:=$(masks:%.nii.gz=%$(OUTPUT))",
