@@ -34,6 +34,7 @@ parser$add_argument("-t", "--testvoxel", type="integer", help="Specify a voxel o
 parser$add_argument("-p", "--processors", type="integer", help="Run using shared memory with p processors")
 parser$add_argument("--sgeN",  type="integer", nargs=1, help="Run using SGE generating N jobs")
 parser$add_argument("--slurmN",  type="integer", nargs=1, help="Run using Slurm generating N jobs")
+parser$add_argument("--pbsN",  type="integer", nargs=1, help="Run using PBS generating N jobs")
 
 if (file.exists("readargs.R")) {
     source("readargs.R")
@@ -77,10 +78,21 @@ origargs <- args
 args <- npointCheckArguments(args)
 
 #### Are we running in parallel?
-if (!is.null(args$processors) || !is.null(args$sgeN) || !is.null(args$slurmN)) {
+if (!is.null(args$processors) || !is.null(args$sgeN) || !is.null(args$slurmN) || !is.null(args$pbsN)) {
     runningParallel =TRUE
 } else {
     runningParallel= FALSE
+}
+
+#### Did someone specify some combination of sge, slurm and PBS? Exit if they did
+multipleschedulerflags <- sum(!is.null(args$sgeN), !is.null(args$slurmN), !is.null(args$pbsN))
+
+if (multipleschedulerflags > 1) {
+    message("You tried to create driver files for multiple schedulers. You can only specify one at a time.")
+    message("If you want Slurm, use only the --slurmN flag.")
+    message("If you want PBS, use only the --pbsN flag.")
+    message("If you want SGE, use only the --sgeN flag.")        
+    stop("Please try again specifying only one scheduler flag.")
 }
 
 #### If we are writing out files for a scheduler, identify the number of files
@@ -90,14 +102,11 @@ if (runningParallel) {
         nSchedulerJobs <- args$sgeN
     } else if (!is.null(args$slurmN)) {
         nSchedulerJobs <- args$slurmN
+    } else if (!is.null(args$pbsN)) {
+        nSchedulerJobs <- args$pbsN
     }
-   # did someone specify both sge and slurm?
-    if (!is.null(args$sgeN) && !is.null(args$slurmN)) {
-        message("You tried to specify both sge and slurm driver files. You can only specify one at a time.")
-        message("I'm defaulting to SGE. If you want Slurm, use only the --slurmN flag.")
-    }
-}
 
+}
 
 #### A lookup function to convert FSL indices to a vertex number for testing
 imagecoordtovertex <- function(x,y,z) {
@@ -137,6 +146,13 @@ rm(data)
 gc()
 
 ###############################################################################
+### Create the output directory if it does not exist
+dir <- dirname(args$output)
+if (!dir.exists(dir)) {
+    dir.create(dir, recursive=TRUE)
+}
+
+###############################################################################
 #### Read in covariates if specified and merge with other covariates specified
 #### on the command line
 if (!is.null(args$covariates)) {
@@ -148,9 +164,6 @@ if (!is.null(args$covariates)) {
 ### to this file
 if(!is.null(args$debugfile)) {
     dir <- dirname(args$output)
-    if (!dir.exists(dir)) {
-        dir.create(dir, recursive=TRUE)
-    }
     # add the prefix to the debug file name
     debugfilename <- paste(dir, args$debugfile,sep="/")
     save(designmat,voxeldat, imagecoordtovertex, mask.arrayindices, file=debugfilename)
@@ -194,7 +207,7 @@ if (runningParallel) {
         stopCluster(cl)
         npointWriteOutputFiles(args$output,results,mask)
         npointWriteCallingInfo(origargs)
-    } else { # we are using SGE or SLURM
+    } else { # we are using SGE or SLURM or PBS
       # save the design matrix
         designmatname <- paste(args$output, "designmat.rds", sep="")
         makefilename <- paste(dirname(args$output), "/Makefile", sep="")
@@ -238,7 +251,12 @@ if (runningParallel) {
               masterscript.scheduler <- paste(dirname(args$output), "/runme.slurm", sep="")
               jobscript <- paste(dirname(args$output), "/slurmjob.bash", sep="")
               npointWriteSlurmsubmitscript(basename(args$output), names(out), paste(getwd(), "/",args$model,sep=""), basename(designmatname), masterscript.scheduler,jobscript, njobs)              
-          } else {
+
+          } else if (!is.null(args$pbsN)) {
+              masterscript.scheduler <- paste(dirname(args$output), "/runme.pbs", sep="")
+              jobscript <- paste(dirname(args$output), "/pbsjob.bash", sep="")
+              npointWritePBSsubmitscript(basename(args$output), names(out), paste(getwd(), "/",args$model,sep=""), basename(designmatname), masterscript.scheduler,jobscript, njobs)              
+          } else {              
               # We better not get here
               stop("Cannot identify which scheduler to output")
           }

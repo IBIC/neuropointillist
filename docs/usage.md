@@ -1,7 +1,7 @@
 # npoint
 ## Usage
 `npoint --set1 listoffiles1.txt --setlabels1 file1.csv --set2 listoffiles2.txt  --setlabels2 file2.csv`
-`--covariates covariatefile.csv  --mask mask.nii.gz --model code.R  [ -p N | --sgeN N | --slurmN ] --output output`
+`--covariates covariatefile.csv  --mask mask.nii.gz --model code.R  [ -p N | --sgeN N | --slurmN | pbsN ] --output output`
 `--debugfile outputfile `
 
 If a file called `readargs.R` exists that sets a vector called `cmdargs`, this file will be read to obtain the arguments for `npoint` instead of taking them from the command line. This is intended to make it a little easier to remember the long lists of arguments. 
@@ -9,9 +9,9 @@ If a file called `readargs.R` exists that sets a vector called `cmdargs`, this f
 File inputs that are supported are nifti files. _Cifti, and mgz files will be supported in the future.  Alternatively, the user should also be able to supply a CSV file with the data in it, for other types of neuroimaging analysis that might not conform to this model._ The file type is determined simply by the extension (.nii = cifti, .nii.gz = nifti, .mgz is vertex surface). 
 
 `--set1`, `--set2`, ..`--set5`
- By default, the command line variant of the program supports up to 5 input sets. These sets can correspond to longitudinal data points. If more than five input file sets are necessary one should use the programmatic interface, or organize your data as a single input file set in long format with corresponding covariates. Each setfile (`listoffiles1.text ... listoffiles2.txt`) is a text file that contains the filenames in each set, one per row. These sets can correspond to longitudinal data points. They do not have to have the same subjects in each set (i.e., there can be missing data if the models you intend to use support that). **At least one set and corresponding setlabel must be provided **
+ By default, the command line variant of the program supports up to 5 input sets. These sets can correspond to longitudinal data points. If more than five input file sets are necessary one should use the programmatic interface, or organize your data as a single input file set in long format with corresponding covariates. Each setfile (`listoffiles1.text ... listoffiles2.txt`) is a text file that contains the filenames in each set, one per row. These sets can correspond to longitudinal data points. They do not have to have the same subjects in each set (i.e., there can be missing data if the models you intend to use support that). **At least one set and corresponding setlabel must be provided**
  
- `--setlabels1`, `--setlabels2`, ... `setlabels5`
+`--setlabels1`, `--setlabels2`, ... `setlabels5`
  
 The setlabel files are csv files that specify variables that correspond to the files in the sets provided above. There must be exactly the same number of setlabel files as sets. If the MRI data files in each set are three dimensional, the list of files in the set  should have exactly the same number of entries as the corresponding label csv file.  If the files are four dimensional (fMRI data), the corresponding label csv files should include one entry per volume (TR). The data from the setlabels must be provided in the same order as the data in the set files. Normally, set label files will include (at the least) an id number and a time point for each 3D file that is specified. For 4D files, set label files will probably include an id number, time point, TR and elements of the fMRI design matrix. The headers of the setlabel files must be consistent across sets, and consistent with headers in the covariate file, if specified, below. **At least one set and setlabel must be provided.**
 
@@ -34,6 +34,20 @@ The setlabel files are csv files that specify variables that correspond to the f
 
 `--slurmN N` The `--slurmN` argument specifies to read the data and divide it into `N` jobs that can be submitted to a Slurm scheduler (using a script that is generated called, suggestively, `runme.slurm`) or divided among machines by hand and run using GNU make. If Slurm is used, the template file **slurmjob.bash** must be edited!!! Unlike SGE, Slurm works best if you give good estimates of the time your program will take to run, the amount of memory it needs, and if you select the number of jobs to make each one not very small. The file that is written is currently a template based on Harvard's cluster configuration. Like with SGE, we assume that the directory that the program is called from is read/writeable from all cluster nodes. At the risk of oversharing, Slurm's name derives from Simple Linux Utility for Resource Management, but I find it rather funny to sound it out in my head as I have been adding this feature. **See notes below on running a model using the Slurm Workload Manager.**
 
+
+`--pbsN N` Much like the flag `--slurmN` described above, the `--pbsN` argument specifies to read the data and divide
+it into `N` jobs that can be submitted to a Torque PBS  scheduler
+(using a script that is generated called `runme.pbs`) or divided among
+machines by hand and run using GNU make. If PBS is used, the
+template file **pbsjob.bash** must be edited!!! PBS
+works best if you give good estimates of the time your program will
+take to run, the amount of memory it needs, and if you select the
+number of jobs to make each one not very small. The file that is
+written is a template based on the Universty of Michigan's Flux cluster
+configuration. Like with SGE, we assume that the directory that the
+program is called from is read/writeable from all cluster nodes.
+ **See notes below on running a model using Torque PBS.**
+
 `--output` Specify an output prefix that is prepended to output files. This is useful for organizing output for SGE runs; you can specify something like `--output model-stressXtime/mod1` to organize all the output files and execution scripts into a subdirectory. In addition, the model that you used and the calling arguments will be copied with this prefix so that you can remember what you ran. This is modeled off of how FSL FEAT copies the .fsf file into the FEAT directory (so simple and so handy)! (**required**)
 
 `--debug debugfile` Write out external representations of the design matrix, the fMRI data, and a function called `imagecoordtovertex`, which maps three-dimensional image coordinates (e.g. from fslview) into a vertex number, to the file `debugfile`. This may be useful for development and testing of your model, or troubleshooting problems with the setfiles or covariate files. The debugfile will be prefixed by the output prefix. See the Vignette for instructions for how to use the debugfile.
@@ -48,21 +62,28 @@ You will be doing the same thing over a lot of voxels in some kind of loop. If y
 
 Depending on what package you are using in your model and how it is compiled, you may find that the package or underlying libraries themselves are multi-threaded. This will be obvious if you run `top` while executing your model on a multi-core machine. If things are working well, the `R` processes should show up as using up to 100% of the CPU. If your parallelism is fighting with multithreading, you will see your processes using _over_ 100% of the CPU. This is not a good thing! It means that two levels of parallelism are fighting with each other for resources. When they do this, you might find that jobs take many times longer than they should, or worse, never complete.
 
-You will need to figure out how to turn off any underlying parallelism. For the `nlme` library you should set the environment variable `OMP_NUM_THREADS=1` in your shell. Setting this variable in the R script did not work (although it might be that if I do so before loading the `nlme` library it would work). However, other libraries may have other environment variables that should be manipulated.
+You will need to figure out how to turn off any underlying
+parallelism. For the `nlme` library you should set the environment
+variable `OMP_NUM_THREADS=1` in your shell. Setting this variable in
+the R script did not work (although it might be that if I do so before
+loading the `nlme` library it would work). However, other libraries
+may have other environment variables that should be manipulated.
 
-Practically, I recommend running using SGE parallelism to give
-yourself the widest range of opportunities to complete your job using
-limited resources. If you do that, you can use `make` on a multicore
-machine, you can use any SGE that you like, and it should be pretty
-easy to use any other batch scheduler that takes scripts. You can even
-copy files to multiple computers and run subsets of the job on
-different machines.
+Practically, I recommend running using SGE parallelism (or whatever
+scheduler that you have) to give yourself the widest range of
+opportunities to complete your job using limited resources. If you do
+that, you can use `make` on a multicore machine or you can use a batch
+scheduler.  You can even copy files to multiple computers and run
+subsets of the job on different machines. Desparate times. I've been
+there more often than seems fair.
 
 ## Running a model using SGE parallelism 
 
 The `readargs.R` file in `example.rawfmri` is configured so that it will create a directory called `sgetest` with the assembled design matrix file (in rds format), the split up fMRI data (also in rds format), and files to run the job. These files are:
 
 `Makefile` This file contains the rules for running each subjob and assembling the results. Note that the executables `npointrun` and `npointmerge` must be in your path environment. You can run your job by typing `make -j <ncores>` at the command line in the `sgetest` directory, or by calling the script `runme.local`, which will use 4 cores by default. You can also type `make mostlyclean` to remove all the intermediate files once your job has completed and you have reassembled your output (by any method). If instead you type `make clean`, you can remove all the rds files also. 
+
+For convenience when using cluster systems where you need to give estimates for run time and memory use, the Makefile defines a `TIME` variable to be a command which will dump out information about these things. Unfortunately, the appropriate command is somewhat different across UNIX variants. If it is not a Linux or Mac variant of UNIX, this may be unset. 
 
 `sgejob.bash` This is the job submission script for processing the data using SGE. Note that `npointrun` needs to be in your path. The commands in the job submission script are bash commands.
 
@@ -72,12 +93,7 @@ The `readargs.R` file in `example.rawfmri` is configured so that it will create 
 
 
 `Makefile` This file contains the rules for running each subjob and
-assembling the results. Note that the executables `npointrun` and
-`npointmerge` must be in your path environment. You can run your job
-by typing `make -j <ncores>` at the command line, or by calling the script `runme.local`, which will use 4 cores by default. You can also type
-`make mostlyclean` to remove all the intermediate files once your job
-has completed and you have reassembled your output (by any method). If
-instead you type `make clean`, you can remove all the rds files also.
+assembling the results. See description of the `Makefile` in **Running a model using SGE parallelism**, above.
 
 `slurmjob.bash` This is the job submission script for submitting the
 job to the Slurm Workload Manager. **Note that you must edit this file
@@ -103,6 +119,39 @@ estimate for the cluster.
 
 `runme.slurm` This script will submit the job to the Slurm Workload
 manager. The job is an array job that includes as many tasks as you
+specified. You will get an email when your job has completed. At that
+point, you can then come back to this directory and type `make` to
+merge the output files.
+
+
+## Running a model using PBS Torque
+
+`Makefile` This file contains the rules for running each subjob and
+assembling the results. See description of the `Makefile` in *Running a model using SGE parallelism*, above.
+
+`pbsjob.bash` This is the job submission script for submitting the job
+to PBS. **Note that you must edit this file before submitting the
+job.** The defaults that are written here probably won't work for you;
+they are modeled after the University of Michigan's Flux cluster and
+should be thought of as placeholders. The first thing to change is the
+partition, which is set to `support_flux` by default. You will need to
+change this to a partition that you have access to on your system. Next, you need to specify the number of processors you will be using (`procs=`) and give a good estimate for the amount of
+memory, in MB, your job will use (`pmem=`). You can get a reasonable
+estimate by running `make` on your local machine to run one job
+sequentially. The `time` command will give you statistics on how much
+memory each job uses. You would probably want to look at the Maximum
+resident set size, which is given in KB (divide by about 1000 to
+obtain MB). Assuming your jobs are approximately the same size, you
+should be able to double or triple this and use that figure as an
+estimate. You also need to provide an estimate for the time you expect
+each job to take; it will be terminated if the job does not complete
+within that time. You can look at the elapsed wall clock time to get
+this estimate. The cluster might be slower on a single job than your
+desktop, so make sure to multiply this wall clock time to provide an
+estimate for the cluster.
+
+`runme.pbs` This script will submit the job to PBS.
+The job is an array job that includes as many tasks as you
 specified. You will get an email when your job has completed. At that
 point, you can then come back to this directory and type `make` to
 merge the output files.
