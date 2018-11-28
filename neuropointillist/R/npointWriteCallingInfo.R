@@ -52,10 +52,16 @@ npointWriteCallingInfo <- function(args) {
     parallelFlags <- NULL
     if (!is.null(args$processors)) {
         parallelFlags <- paste("\"--processors\"", ", \"", args$processors, "\"", sep="")
-    } else {
-        if (!is.null(args$sgeN)) {
+    } else  if (!is.null(args$sgeN)) {
             parallelFlags <- paste("\"--sgeN\"", ", \"", args$sgeN, "\"", sep="")
-        }
+    } else  if (!is.null(args$pbsN)) {
+        parallelFlags <- paste("\"--pbsN\"", ", \"", args$pbsN, "\"", sep="")
+        
+    } else  if (!is.null(args$slurmN)) {
+        parallelFlags <- paste("\"--slurmN\"", ", \"", args$slurmN, "\"", sep="")    
+    }
+    if (!is.null(args$pbsPre)) {
+        parallelFlags <- paste(parallelFlags, ", \"--pbsPre\"", ", \"", normalizePath(args$pbsPre), "\"", sep="")
     }
 
     debugfile <- NULL
