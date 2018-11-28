@@ -1,7 +1,7 @@
 # npoint
 ## Usage
 `npoint --set1 listoffiles1.txt --setlabels1 file1.csv --set2 listoffiles2.txt  --setlabels2 file2.csv`
-`--covariates covariatefile.csv  --mask mask.nii.gz --model code.R  [ -p N | --sgeN N | --slurmN | pbsN ] --output output`
+`--covariates covariatefile.csv  --mask mask.nii.gz --model code.R  [ -p N | --sgeN N | --slurmN | --pbsN ] --pbsPre PBSpreamblefile --output output`
 `--debugfile outputfile `
 
 If a file called `readargs.R` exists that sets a vector called `cmdargs`, this file will be read to obtain the arguments for `npoint` instead of taking them from the command line. This is intended to make it a little easier to remember the long lists of arguments. 
@@ -47,6 +47,8 @@ written is a template based on the Universty of Michigan's Flux cluster
 configuration. Like with SGE, we assume that the directory that the
 program is called from is read/writeable from all cluster nodes.
  **See notes below on running a model using Torque PBS.**
+
+`--pbsPre PBSpreamblefile` By default the `--pbsN` flag will generate a Torque PBS batch file that you will need to edit. You can override this by specifying a preamble file with all the settings that will be used instead of these default values. You can only use this flag with the `--pbsN` option.  **See notes below on running a model using Torque PBS.**
 
 `--output` Specify an output prefix that is prepended to output files. This is useful for organizing output for SGE runs; you can specify something like `--output model-stressXtime/mod1` to organize all the output files and execution scripts into a subdirectory. In addition, the model that you used and the calling arguments will be copied with this prefix so that you can remember what you ran. This is modeled off of how FSL FEAT copies the .fsf file into the FEAT directory (so simple and so handy)! (**required**)
 
@@ -124,7 +126,7 @@ point, you can then come back to this directory and type `make` to
 merge the output files.
 
 
-## Running a model using PBS Torque
+## Running a model using Torque PBS
 
 `Makefile` This file contains the rules for running each subjob and
 assembling the results. See description of the `Makefile` in **Running a model using SGE parallelism**, above.
@@ -133,10 +135,10 @@ assembling the results. See description of the `Makefile` in **Running a model u
 to PBS. **Note that you must edit this file before submitting the
 job.** The defaults that are written here probably won't work for you;
 they are modeled after the University of Michigan's Flux cluster and
-should be thought of as placeholders. The first thing to change is the
-partition, which is set to `support_flux` by default. You will need to
-change this to a partition that you have access to on your system. Next, you need to specify the number of processors you will be using (`procs=`) and give a good estimate for the amount of
-memory, in MB, your job will use (`pmem=`). You can get a reasonable
+should be thought of as placeholders. All of these defaults can be overridden using the `--pbsPre` flag, which allows you to specify a preamble file with defaults that will be used instead of the program defaults.
+
+The first thing to change is the partition, which is set to `support_flux` by default. You will need to change this to a partition that you have access to on your system. Because the job is submitted as a task array job, you can leave the number of nodes and processors alone.
+However, you will need to estimate how much memory, in MB, your job will use (`pmem=`). You can get a reasonable
 estimate by running `make` on your local machine to run one job
 sequentially. The `time` command will give you statistics on how much
 memory each job uses. You would probably want to look at the Maximum
@@ -148,7 +150,7 @@ each job to take; it will be terminated if the job does not complete
 within that time. You can look at the elapsed wall clock time to get
 this estimate. The cluster might be slower on a single job than your
 desktop, so make sure to multiply this wall clock time to provide an
-estimate for the cluster.
+estimate for the cluster. Alternatively, you can run a job and look at the report that you get emailed back. If you start with a relatively high estimate for memory and wall clock time, you can scale it back.
 
 `runme.pbs` This script will submit the job to PBS.
 The job is an array job that includes as many tasks as you
