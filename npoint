@@ -35,6 +35,7 @@ parser$add_argument("-p", "--processors", type="integer", help="Run using shared
 parser$add_argument("--sgeN",  type="integer", nargs=1, help="Run using SGE generating N jobs")
 parser$add_argument("--slurmN",  type="integer", nargs=1, help="Run using Slurm generating N jobs")
 parser$add_argument("--pbsN",  type="integer", nargs=1, help="Run using PBS generating N jobs")
+parser$add_argument("--pbsPre",  type="character", nargs=1, help="Name of PBS preamble file to use if you wish to override default settings")
 
 if (file.exists("readargs.R")) {
     source("readargs.R")
@@ -95,6 +96,17 @@ if (multipleschedulerflags > 1) {
     stop("Please try again specifying only one scheduler flag.")
 }
 
+#### Check to see that PBS preamble is only specified with PBS option
+if (!is.null(args$pbsPre)) {
+    if (is.null(args$pbsN)) {
+        stop("You have specified a PBS preamble without the PBS scheduler flag. You cannot use a PBS preamble with other schedulers.")
+    }
+    # make sure the preamble file exists
+    if (!file.exists(args$pbsPre)) {
+        stop("PBS preamble file ", args$pbsPre, " does not exist!")
+    }
+}
+
 #### If we are writing out files for a scheduler, identify the number of files
 nSchedulerJobs <- -1 # for sanity
 if (runningParallel) {
@@ -147,6 +159,7 @@ gc()
 
 ###############################################################################
 ### Create the output directory if it does not exist
+
 dir <- dirname(args$output)
 if (!dir.exists(dir)) {
     dir.create(dir, recursive=TRUE)
@@ -255,7 +268,7 @@ if (runningParallel) {
           } else if (!is.null(args$pbsN)) {
               masterscript.scheduler <- paste(dirname(args$output), "/runme.pbs", sep="")
               jobscript <- paste(dirname(args$output), "/pbsjob.bash", sep="")
-              npointWritePBSsubmitscript(basename(args$output), names(out), paste(getwd(), "/",args$model,sep=""), basename(designmatname), masterscript.scheduler,jobscript, njobs)              
+              npointWritePBSsubmitscript(basename(args$output), names(out), paste(getwd(), "/",args$model,sep=""), basename(designmatname), masterscript.scheduler,jobscript, njobs, args$pbsPre)              
           } else {              
               # We better not get here
               stop("Cannot identify which scheduler to output")
