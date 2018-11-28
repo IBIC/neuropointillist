@@ -164,11 +164,10 @@ The `readargs.R` file in the `example.flournoy` directory is configured so that 
 
 Note that the syntax for trapping errors is a little bit different. We check to see whether the error inherits from `try-error`.
 
-```
 # npointrun
 Run a model on a single data set sequentially, without data splitting
 
-##Usage
+## Usage
 `npointrun --mask mask.nii.gz --model code.R  --designmat designmat.rds`
 
 `--mask mask.nii.gz` Nonzero mask voxels must indicate locations of the data in the corresponding RDS file.  The name of the mask is used to obtain the name of the RDS data file (substituting .nii.gz for .rds). (**required**)
