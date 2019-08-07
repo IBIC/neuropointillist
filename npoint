@@ -36,6 +36,7 @@ parser$add_argument("--sgeN",  type="integer", nargs=1, help="Run using SGE gene
 parser$add_argument("--slurmN",  type="integer", nargs=1, help="Run using Slurm generating N jobs")
 parser$add_argument("--pbsN",  type="integer", nargs=1, help="Run using PBS generating N jobs")
 parser$add_argument("--pbsPre",  type="character", nargs=1, help="Name of PBS preamble file to use if you wish to override default settings")
+parser$add_argument("--permute",  type="integer", nargs=1, help="Enter permutation testing mode with N permutations. This will generate N jobs, ignoring the number of jobs passed to any scheduler parameters. Each permutation will create a single 3D output file.")
 
 if (file.exists("readargs.R")) {
     source("readargs.R")
@@ -118,6 +119,21 @@ if (runningParallel) {
         nSchedulerJobs <- args$pbsN
     }
 
+}
+
+#### If we are in permutation mode, reset the number of scheduler jobs 
+#### In this mode, we will not split the data at all. We will generate a makefile
+#### that runs the processVoxel code across all the data to generate each permutation
+permutationMode <- 0
+if (!is.null(args$permute)) {
+    permutationMode <- 1
+    nSchedulerJobs <- args$permute
+    if (!is.null(args$processors)) {
+        stop("Cannot specify -p flag with permute mode. You must specify a scheduler with some number of jobs, which will be ignored, and one job will be created for each permuation.")
+    }
+    if (!runningParallel) {
+        stop("If running in permute mode, you must specify a scheduler with some number of jobs. This number of jobs will be ignored, and one job will be created for each permuation.")
+        }
 }
 
 #### A lookup function to convert FSL indices to a vertex number for testing
@@ -208,35 +224,76 @@ if(!exists('processVoxel')) {
 #### Do the parallel processing
 
 nvertices <- length(mask.vertices)
-if (runningParallel) {
-    if (!is.null(args$processors)) {
-        attach(designmat) # we attach to the designmat
-        cl <- makeCluster(args$processors, type="FORK")
-        cat("Exporting data to cluster.\n")
-        clusterExport(cl,varlist=c("voxeldat"))
-        cat("Starting parallel job using", args$processors, "cores.\n")
-        cat("Use top to make sure that no threads are using more than 100% of the CPU.\n")
-        system.time(results <-parSapply(cl,1:nvertices, processVoxel))
-        stopCluster(cl)
-        npointWriteOutputFiles(args$output,results,mask)
-        npointWriteCallingInfo(origargs)
-    } else { # we are using SGE or SLURM or PBS
-      # save the design matrix
-        designmatname <- paste(args$output, "designmat.rds", sep="")
-        makefilename <- paste(dirname(args$output), "/Makefile", sep="")
-        masterscript.local <- paste(dirname(args$output), "/runme.local", sep="")
-        saveRDS(designmat,designmatname)
-        attach(designmat) # attach to the designmat
-                        # test one voxel to obtain names for return vals
-        if (args$testvoxel < 0) {
-            args$testvoxel <- trunc(dim(voxeldat)[2]/2)
-                                                 }
-        tryCatch({ out <- processVoxel(args$testvoxel)},error=function(e) {
-            message("error testing the model on a random voxel to determine output filenames")
-            message("try providing the -t option to give a specific voxel for testing")
-            message(e)
-            stop("Exiting before generating makefile.")})
-        npointWriteMakefile(basename(args$output), names(out), paste(getwd(), "/",args$model,sep=""), basename(designmatname), makefilename, masterscript.local)
+if (permutationMode) { # we are using SGE or SLURM or PBS
+    # save the design matrix
+    designmatname <- paste(args$output, "designmat.rds", sep="")
+    makefilename <- paste(dirname(args$output), "/Makefile", sep="")
+    masterscript.local <- paste(dirname(args$output), "/runme.local", sep="")
+    saveRDS(designmat,designmatname)
+    attach(designmat) # attach to the designmat
+                                        # test one voxel to obtain names for return vals
+    if (args$testvoxel < 0) {
+        args$testvoxel <- trunc(dim(voxeldat)[2]/2)
+    }
+    permutationNumber <- 1 # set permutation number
+    tryCatch({ out <- processVoxel(args$testvoxel)},error=function(e) {
+        message("error testing the model on a random voxel to determine output filenames")
+        message("try providing the -t option to give a specific voxel for testing")
+        message(e)
+        stop("Exiting before generating makefile.")})
+    npointWriteMakefilePermute(basename(args$output), names(out), paste(getwd(), "/",args$model,sep=""), basename(designmatname), makefilename, masterscript.local, nSchedulerJobs)
+    npointSplitDataSize(dim(voxeldat)[2],voxeldat,args$output,mask)
+
+    if (!is.null(args$sgeN)) {
+        masterscript.scheduler <- paste(dirname(args$output), "/runme.sge", sep="")
+        jobscript <- paste(dirname(args$output), "/sgejob.bash", sep="")
+ #       npointWriteSGEsubmitscript(basename(args$output), names(out), paste(getwd(), "/",args$model,sep=""), basename(designmatname), masterscript.scheduler,jobscript, njobs)
+        
+    } else if (!is.null(args$slurmN)) {
+        masterscript.scheduler <- paste(dirname(args$output), "/runme.slurm", sep="")
+        jobscript <- paste(dirname(args$output), "/slurmjob.bash", sep="")
+  #      npointWriteSlurmsubmitscript(basename(args$output), names(out), paste(getwd(), "/",args$model,sep=""), basename(designmatname), masterscript.scheduler,jobscript, njobs)              
+        
+    } else if (!is.null(args$pbsN)) {
+        masterscript.scheduler <- paste(dirname(args$output), "/runme.pbs", sep="")
+        jobscript <- paste(dirname(args$output), "/pbsjob.bash", sep="")
+   #     npointWritePBSsubmitscript(basename(args$output), names(out), paste(getwd(), "/",args$model,sep=""), basename(designmatname), masterscript.scheduler,jobscript, njobs, args$pbsPre)              
+    } else {              
+         # We better not get here
+        stop("Cannot identify which scheduler to output")
+    }
+    npointWriteCallingInfo(origargs)
+
+} else {
+    if (runningParallel) {
+        if (!is.null(args$processors)) {
+            attach(designmat) # we attach to the designmat
+            cl <- makeCluster(args$processors, type="FORK")
+            cat("Exporting data to cluster.\n")
+            clusterExport(cl,varlist=c("voxeldat"))
+            cat("Starting parallel job using", args$processors, "cores.\n")
+            cat("Use top to make sure that no threads are using more than 100% of the CPU.\n")
+            system.time(results <-parSapply(cl,1:nvertices, processVoxel))
+            stopCluster(cl)
+            npointWriteOutputFiles(args$output,results,mask)
+            npointWriteCallingInfo(origargs)
+        } else { # we are using SGE or SLURM or PBS
+                                        # save the design matrix
+            designmatname <- paste(args$output, "designmat.rds", sep="")
+            makefilename <- paste(dirname(args$output), "/Makefile", sep="")
+            masterscript.local <- paste(dirname(args$output), "/runme.local", sep="")
+            saveRDS(designmat,designmatname)
+            attach(designmat) # attach to the designmat
+                                        # test one voxel to obtain names for return vals
+            if (args$testvoxel < 0) {
+                args$testvoxel <- trunc(dim(voxeldat)[2]/2)
+            }
+            tryCatch({ out <- processVoxel(args$testvoxel)},error=function(e) {
+                message("error testing the model on a random voxel to determine output filenames")
+                message("try providing the -t option to give a specific voxel for testing")
+                message(e)
+                stop("Exiting before generating makefile.")})
+            npointWriteMakefile(basename(args$output), names(out), paste(getwd(), "/",args$model,sep=""), basename(designmatname), makefilename, masterscript.local)
 
 
        # do sanity check to make sure we obtained the number of jobs
@@ -285,6 +342,9 @@ if (runningParallel) {
     npointWriteOutputFiles(args$output,results,mask)
     npointWriteCallingInfo(origargs)
 }
+}
+
+
 
         
                 

@@ -16,9 +16,9 @@ suppressPackageStartupMessages(library(neuropointillist))
 parser <- ArgumentParser()
 parser$add_argument("-m", "--mask",  nargs=1, help="Maskfile to process", required=TRUE)
 parser$add_argument("-d", "--designmat",  nargs=1, help="Design matrix in RDS format", required=TRUE)
+parser$add_argument("-p", "--permutationfile",  nargs=1, help="File name of the permutation output that includes permutation number", required=FALSE)
 parser$add_argument("--model", nargs=1, help="R code that defines the voxelwise-model and any initialization", required=TRUE)
 
-#cmdargs <- c("-m", "fl.0078.nii.gz", "--model", "model.R", "-d", "designmat.rds")
 
 args <- parser$parse_args()
 
@@ -76,11 +76,27 @@ stopifnot(dim(voxeldat)[1] == dim(designmat)[1])
 ###############################################################################
 #### Do the processing
 
+# if permutation testing, we set the number of the permutation. This can be used as a seed or for other purposes
+# we also drop the suffix (must be .nii.gz)
+if (!is.null(args$permutationfile)) {
+    permutationNumber <- as.numeric(gsub("[^[:digit:]]", "",  args$permutationfile))
+    permuteBasename <- gsub(".nii.gz$", "", args$permutationfile)
+}
+
 cat("Starting sequential job\n")
 system.time(results <-sapply(1:nvertices, processVoxel))
+prefix <- gsub(".nii.gz$","", args$mask)
 
-prefix <- gsub(".nii.gz","", args$mask)
+# Use the permutation file name provided to modify permutation filenames if we are doing that
+if (!is.null(args$permutationfile)) {
+    # test to see if more than one name was returned
 
+    if(is.array(results)) {
+        attributes(results[,1])$names <- paste(attributes(results[,1])$names, permutationNumber, sep=".")
+    } else {
+        attributes(results)$names[1]<- paste(attributes(results[,1])$names, permutationNumber, sep=".")
+    }
+}
 npointWriteOutputFiles(prefix,results,mask)
 
 
