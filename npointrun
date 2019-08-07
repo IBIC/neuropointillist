@@ -79,8 +79,9 @@ stopifnot(dim(voxeldat)[1] == dim(designmat)[1])
 # if permutation testing, we set the number of the permutation. This can be used as a seed or for other purposes
 # we also drop the suffix (must be .nii.gz)
 if (!is.null(args$permutationfile)) {
-    permutationNumber <- as.numeric(gsub("[^[:digit:]]", "",  args$permutationfile))
-    permuteBasename <- gsub(".nii.gz$", "", args$permutationfile)
+    permutationNumberString <- gsub("[^[:digit:]]", "",  args$permutationfile)
+    permutationNumber <- as.numeric(permutationNumberString)
+
 }
 
 cat("Starting sequential job\n")
@@ -90,13 +91,14 @@ prefix <- gsub(".nii.gz$","", args$mask)
 # Use the permutation file name provided to modify permutation filenames if we are doing that
 if (!is.null(args$permutationfile)) {
     # test to see if more than one name was returned
-
+    # paste the permutation number to the array of names
     if(is.array(results)) {
-        attributes(results[,1])$names <- paste(attributes(results[,1])$names, permutationNumber, sep=".")
+        rownames(results) <- paste(attributes(results[,1])$names, permutationNumberString, sep=".")
     } else {
-        attributes(results)$names[1]<- paste(attributes(results[,1])$names, permutationNumber, sep=".")
+        names(results) <- rep(paste(attributes(results)$names[1], permutationNumberString, sep="."), length(results))
     }
 }
+
 npointWriteOutputFiles(prefix,results,mask)
 
 
