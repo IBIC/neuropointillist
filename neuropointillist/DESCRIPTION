@@ -1,13 +1,19 @@
 Package: neuropointillist
 Title: Flexible Parallel Modeling of Neuroimaging Data, Point by Point
-Version: 0.0.0.9000
+Version: 0.0.0.9100
 Authors@R: person("Tara", "Madhyastha", email = "tara.madhyastha@gmail.com", role = c("aut", "cre"))
 Description: This package contains R functions and scripts to read in
     neuroimaging data, compute voxel-wise statistics in parallel, and reassemble the
     results.
 Depends:
-    R (>= 3.2.3)
-License: GPL(>=2), doParallel,argparse,Rniftilib
+    R (>= 3.2.3),
+    doParallel,
+    argparse,
+    Rniftilib
+Suggests:
+    nlme,
+    clubSandwich
+License: GPL(>=2)
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 6.1.1
