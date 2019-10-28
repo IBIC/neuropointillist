@@ -37,8 +37,12 @@
 #' @param random A random-effects formula that \code{\link[nlme]{lme}}
 #'   understands.
 #' @param data The data frame appropriate for \code{\link[nlme]{lme}}.
-#' @param lmeOpts Named list of any additional arguments are passed to
-#'   \code{\link[nlme]{lme}}.
+#' @param lmeOptsResid Named list of any additional arguments are passed to
+#'   \code{\link[nlme]{lme}} when it's used to generate the residuals that will
+#'   be permuted.
+#' @param lmeOptsPerm Named list of any additional arguments are passed to
+#'   \code{\link[nlme]{lme}} when it's used to estimate the full model on the
+#'   data with the permuted residuals added back in.
 #' @param sandwichOpts Named list of any additional arguments are passed to
 #'   \code{\link[clubSandwich]{coef_test}}.
 #'
@@ -47,7 +51,7 @@
 #'   the second of which, \code{Z}, is the Z statistic for the null hypothesis
 #'   test for the target dependent variable named in \code{targetDV}.
 #' @export
-npointLmePermutation <- function(permutationNumber, permutationRDS, targetDV, z_sw = TRUE, vcov = 'CR2', formula, random, data, lmeOpts = list(), sandwichOpts = list()){
+npointLmePermutation <- function(permutationNumber, permutationRDS, targetDV, z_sw = TRUE, vcov = 'CR2', formula, random, data, lmeOptsResid = list(), lmeOptsPerm = list(), sandwichOpts = list()){
     if (!requireNamespace("nlme", quietly = TRUE)) {
         stop("Package \"nlme\" needed for this function to work. Please install it.",
              call. = FALSE)
@@ -67,7 +71,7 @@ npointLmePermutation <- function(permutationNumber, permutationRDS, targetDV, z_
     ystarFormula <- update(formula, as.formula(paste0('y_star ~ .')))
     
     p <- try({
-        residsModel <- do.call(nlme::lme, c(list(fixed = residsFormula, random = random, data = data), lmeOpts))
+        residsModel <- do.call(nlme::lme, c(list(fixed = residsFormula, random = random, data = data), lmeOptsResid))
         epsilon_z <- resid(residsModel)
         P_j.epsilon_z <- epsilon_z[ithPermutation]
         Zy <- predict(residsModel, level = 1)
@@ -75,7 +79,7 @@ npointLmePermutation <- function(permutationNumber, permutationRDS, targetDV, z_
         residsModel
     })
     
-    e <- try(permutationModel <- do.call(nlme::lme, c(list(fixed = ystarFormula, random = random, data = data), lmeOpts)))
+    e <- try(permutationModel <- do.call(nlme::lme, c(list(fixed = ystarFormula, random = random, data = data), lmeOptsPerm)))
     
     if(inherits(p, "try-error") | inherits(e, "try-error")){
         returnObject <- list(model = NULL, Z = NULL)
