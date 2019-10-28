@@ -32,6 +32,7 @@
 #' @param z_sw Logical indicating whether to return Z based on cluster corrected
 #'   standard errors and Satterthwaite correction for degrees of freedom.
 #'   Defaults to \code{TRUE}.
+#' @param vcov Passed to the sandwich estimator.
 #' @param formula A fixed-effects formula that \code{\link[nlme]{lme}}
 #'   understands.
 #' @param random A random-effects formula that \code{\link[nlme]{lme}}
@@ -43,6 +44,8 @@
 #' @param lmeOptsPerm Named list of any additional arguments are passed to
 #'   \code{\link[nlme]{lme}} when it's used to estimate the full model on the
 #'   data with the permuted residuals added back in.
+#' @param lmeOpts For backward compatibility. If this option is specified, both
+#'   lmeOptsResid and lmeOptsPerm will be set to this list.
 #' @param sandwichOpts Named list of any additional arguments are passed to
 #'   \code{\link[clubSandwich]{coef_test}}.
 #'
@@ -51,7 +54,7 @@
 #'   the second of which, \code{Z}, is the Z statistic for the null hypothesis
 #'   test for the target dependent variable named in \code{targetDV}.
 #' @export
-npointLmePermutation <- function(permutationNumber, permutationRDS, targetDV, z_sw = TRUE, vcov = 'CR2', formula, random, data, lmeOptsResid = list(), lmeOptsPerm = list(), sandwichOpts = list()){
+npointLmePermutation <- function(permutationNumber, permutationRDS, targetDV, z_sw = TRUE, vcov = 'CR2', formula, random, data, lmeOptsResid = list(), lmeOptsPerm = list(), lmeOpts = list(), sandwichOpts = list()){
     if (!requireNamespace("nlme", quietly = TRUE)) {
         stop("Package \"nlme\" needed for this function to work. Please install it.",
              call. = FALSE)
@@ -60,7 +63,13 @@ npointLmePermutation <- function(permutationNumber, permutationRDS, targetDV, z_
         stop("Package \"clubSandwich\" needed for this function to work. Please install it.",
              call. = FALSE)
     }
-    
+    if(length(lmeOpts) != 0){
+      if((length(lmeOptsResid) != 0) | (length(lmeOptsPerm) != 0)){
+        stop('If `lmeOpts` is specified, do not specify `lmeOptsResid` or `lmeOptsPerm`')
+      }
+      lmeOptsResid <- lmeOpts
+      lmeOptsPerm <- lmeOpts
+    }
     permutationMatrix <- readRDS(permutationRDS)
     if(dim(permutationMatrix)[2] != dim(data)[1]){
         stop(sprintf('Permutation vector is not the same length as data.\nLength of permutations: %d; length of data: %d.', 

@@ -6,7 +6,8 @@
 \usage{
 npointLmePermutation(permutationNumber, permutationRDS, targetDV,
   z_sw = TRUE, vcov = "CR2", formula, random, data,
-  lmeOptsResid = list(), lmeOptsPerm = list(), sandwichOpts = list())
+  lmeOptsResid = list(), lmeOptsPerm = list(), lmeOpts = list(),
+  sandwichOpts = list())
 }
 \arguments{
 \item{permutationNumber}{An index specifying the row of the permutation
@@ -25,6 +26,8 @@ interest.}
 standard errors and Satterthwaite correction for degrees of freedom.
 Defaults to \code{TRUE}.}
 
+\item{vcov}{Passed to the sandwich estimator.}
+
 \item{formula}{A fixed-effects formula that \code{\link[nlme]{lme}}
 understands.}
 
@@ -40,6 +43,9 @@ be permuted.}
 \item{lmeOptsPerm}{Named list of any additional arguments are passed to
 \code{\link[nlme]{lme}} when it's used to estimate the full model on the
 data with the permuted residuals added back in.}
+
+\item{lmeOpts}{For backward compatibility. If this option is specified, both
+lmeOptsResid and lmeOptsPerm will be set to this list.}
 
 \item{sandwichOpts}{Named list of any additional arguments are passed to
 \code{\link[clubSandwich]{coef_test}}.}
