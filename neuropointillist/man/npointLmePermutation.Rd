@@ -5,8 +5,8 @@
 \title{npointLmePermutation}
 \usage{
 npointLmePermutation(permutationNumber, permutationRDS, targetDV,
-  z_sw = TRUE, vcov = "CR2", formula, random, data, lmeOpts = list(),
-  sandwichOpts = list())
+  z_sw = TRUE, vcov = "CR2", formula, random, data,
+  lmeOptsResid = list(), lmeOptsPerm = list(), sandwichOpts = list())
 }
 \arguments{
 \item{permutationNumber}{An index specifying the row of the permutation
@@ -33,8 +33,13 @@ understands.}
 
 \item{data}{The data frame appropriate for \code{\link[nlme]{lme}}.}
 
-\item{lmeOpts}{Named list of any additional arguments are passed to
-\code{\link[nlme]{lme}}.}
+\item{lmeOptsResid}{Named list of any additional arguments are passed to
+\code{\link[nlme]{lme}} when it's used to generate the residuals that will
+be permuted.}
+
+\item{lmeOptsPerm}{Named list of any additional arguments are passed to
+\code{\link[nlme]{lme}} when it's used to estimate the full model on the
+data with the permuted residuals added back in.}
 
 \item{sandwichOpts}{Named list of any additional arguments are passed to
 \code{\link[clubSandwich]{coef_test}}.}
