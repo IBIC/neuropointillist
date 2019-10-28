@@ -38,6 +38,9 @@
 #' @param random A random-effects formula that \code{\link[nlme]{lme}}
 #'   understands.
 #' @param data The data frame appropriate for \code{\link[nlme]{lme}}.
+#' @param level Level for residuals and prediction. Set 0 for between-person.
+#'   For within-person centered variables this option should not make any
+#'   difference.
 #' @param lmeOptsResid Named list of any additional arguments are passed to
 #'   \code{\link[nlme]{lme}} when it's used to generate the residuals that will
 #'   be permuted.
@@ -54,7 +57,7 @@
 #'   the second of which, \code{Z}, is the Z statistic for the null hypothesis
 #'   test for the target dependent variable named in \code{targetDV}.
 #' @export
-npointLmePermutation <- function(permutationNumber, permutationRDS, targetDV, z_sw = TRUE, vcov = 'CR2', formula, random, data, lmeOptsResid = list(), lmeOptsPerm = list(), lmeOpts = list(), sandwichOpts = list()){
+npointLmePermutation <- function(permutationNumber, permutationRDS, targetDV, z_sw = TRUE, vcov = 'CR2', formula, random, data, level = 1, lmeOptsResid = list(), lmeOptsPerm = list(), lmeOpts = list(), sandwichOpts = list()){
     if (!requireNamespace("nlme", quietly = TRUE)) {
         stop("Package \"nlme\" needed for this function to work. Please install it.",
              call. = FALSE)
@@ -81,9 +84,9 @@ npointLmePermutation <- function(permutationNumber, permutationRDS, targetDV, z_
     
     p <- try({
         residsModel <- do.call(nlme::lme, c(list(fixed = residsFormula, random = random, data = data), lmeOptsResid))
-        epsilon_z <- resid(residsModel)
+        epsilon_z <- resid(residsModel, level = level)
         P_j.epsilon_z <- epsilon_z[ithPermutation]
-        Zy <- predict(residsModel, level = 1)
+        Zy <- predict(residsModel, level = level)
         data$y_star <- P_j.epsilon_z + Zy
         residsModel
     })

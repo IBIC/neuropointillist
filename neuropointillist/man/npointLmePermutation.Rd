@@ -5,7 +5,7 @@
 \title{npointLmePermutation}
 \usage{
 npointLmePermutation(permutationNumber, permutationRDS, targetDV,
-  z_sw = TRUE, vcov = "CR2", formula, random, data,
+  z_sw = TRUE, vcov = "CR2", formula, random, data, level = 1,
   lmeOptsResid = list(), lmeOptsPerm = list(), lmeOpts = list(),
   sandwichOpts = list())
 }
@@ -35,6 +35,9 @@ understands.}
 understands.}
 
 \item{data}{The data frame appropriate for \code{\link[nlme]{lme}}.}
+
+\item{level}{Level for residuals and prediction. Set to 1 for within-person,
+or 0 for between-person.}
 
 \item{lmeOptsResid}{Named list of any additional arguments are passed to
 \code{\link[nlme]{lme}} when it's used to generate the residuals that will
