@@ -1,0 +1,7 @@
+install.packages("permute",repos="https://cloud.r-project.org")
+install.packages("nlme",repos="https://cloud.r-project.org")
+install.packages("clubSandwich",repos="https://cloud.r-project.org")
+install.packages("argparse", repos="https://cloud.r-project.org")
+install.packages("doParallel", repos="https://cloud.r-project.org")
+install.packages("https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/r-cran-rniftilib/0.0-35.r79-5/r-cran-rniftilib_0.0-35.r79.orig.tar.xz", repos=NULL)
+install.packages("/neuropointillist", type="source",repos=NULL)

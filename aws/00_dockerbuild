@@ -1,0 +1,4 @@
+#!/bin/bash
+command -v dockerfoo >/dev/null 2>&1 || { echo >&2 "Docker needs to be installed and in your path to build a container for neuropointillist. Please see installation instructions."; exit 1; }
+cd dockerbuild
+./builddockercontainer

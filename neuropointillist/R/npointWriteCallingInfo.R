@@ -64,11 +64,6 @@ npointWriteCallingInfo <- function(args) {
         parallelFlags <- paste(parallelFlags, ", \"--pbsPre\"", ", \"", normalizePath(args$pbsPre), "\"", sep="")
     }
 
-    permuteFlag <- NULL
-    if (!is.null(args$permute)) {
-        permuteFlag <- paste("\"--permute\"", ", \"", args$permute, "\"", sep="")        
-    }
-
     debugfile <- NULL
     if (!is.null(args$debugfile)) {
         debugfile <- args$debugfile

@@ -160,53 +160,38 @@ npointSplitDataSize <- function(size, voxeldat, prefix, mask) {
     if (!dir.exists(dir)) {
         dir.create(dir, recursive=TRUE)
     }
-
-
 # reduce mask to list of vertices
     mask.dims <- dim(mask)
     len <- mask.dims[1]*mask.dims[2]*mask.dims[3]
     mask.vector <- as.vector(mask[,,])
     mask.vertices <- which(mask.vector >0)
-    # make sure we write things out correctly if permuation mode is specified and we don't actually need to split data
-    if (size==dim(voxeldat)[1]) {
-        print("got here")
+    d1 <- split(mask.vertices,  ceiling(seq_along(mask.vertices)/(size)))
+    start <- 1
+    for (i in 1:length(d1)) {
+        y <- vector(mode="numeric",length=len)
+        y[unlist(d1[i])] <- 1
         nim <- nifti.image.copy.info(mask)
         nim$dim <- dim(mask)
         nifti.image.alloc.data(nim)
-        nim[,,] <- as.array(mask.vertices,mask.dims)
-        outputfilename <- paste(prefix, sprintf("%04d",1),".nii.gz",sep="")
+        nim[,,] <- as.array(y,mask.dims)
+        outputfilename <- paste(prefix, sprintf("%04d",i),".nii.gz",sep="")
         npointWarnIfNiiFileExists(outputfilename)
         nifti.set.filenames(nim, outputfilename)
         nifti.image.write(nim)
-        saveRDS(voxeldat, paste(prefix, sprintf("%04d",1),".rds",sep=""))
-    } else {
-        start <- 1
-        d1 <- split(mask.vertices,  ceiling(seq_along(mask.vertices)/(size)))
-        for (i in 1:length(d1)) {
-            y <- vector(mode="numeric",length=len)
-            y[unlist(d1[i])] <- 1
-            nim <- nifti.image.copy.info(mask)
-            nim$dim <- dim(mask)
-            nifti.image.alloc.data(nim)
-            nim[,,] <- as.array(y,mask.dims)
-            outputfilename <- paste(prefix, sprintf("%04d",i),".nii.gz",sep="")
-            npointWarnIfNiiFileExists(outputfilename)
-            nifti.set.filenames(nim, outputfilename)
-            nifti.image.write(nim)
-                                        # now subdat the data
-            sz <- length(unlist(d1[i]))
-            saveRDS(voxeldat[,start:(start+sz-1)], paste(prefix, sprintf("%04d",i),".rds",sep=""))
-            start <- start+sz
-            
-        }
-        return(length(d1)) #return the number of jobs it got split into
+                      # now subdat the data
+        sz <- length(unlist(d1[i]))
+        saveRDS(voxeldat[,start:(start+sz-1)], paste(prefix, sprintf("%04d",i),".rds",sep=""))
+        start <- start+sz
+        
     }
+    return(length(d1)) #return the number of jobs it got split into
 }
+
     
 #' Merge the Design Matrix With Covariates 
 #'
-    #' Take the assembled design matrix and merge it with any covariates, making
-    #' #' sure that the output is reasonable.
+#' Take the assembled design matrix and merge it with any covariates, making
+#' sure that the output is reasonable.
 #' @param designmat Design matrix
 #' @param covariatefile Covariate csv file
 #' @param voxeldatdim Dimensions of voxel data

@@ -1,7 +1,7 @@
 # npoint
 ## Usage
 `npoint --set1 listoffiles1.txt --setlabels1 file1.csv --set2 listoffiles2.txt  --setlabels2 file2.csv`
-`--covariates covariatefile.csv  --mask mask.nii.gz --model code.R  [ -p N | --sgeN N | --slurmN | --pbsN ] --pbsPre PBSpreamblefile --output output`
+`--covariates covariatefile.csv  --mask mask.nii.gz --model code.R  [ -p N | --sgeN N | --slurmN | --pbsN ] --pbsPre PBSpreamblefile --permute N --output output`
 `--debugfile outputfile `
 
 If a file called `readargs.R` exists that sets a vector called `cmdargs`, this file will be read to obtain the arguments for `npoint` instead of taking them from the command line. This is intended to make it a little easier to remember the long lists of arguments. 
@@ -49,6 +49,10 @@ program is called from is read/writeable from all cluster nodes.
  **See notes below on running a model using Torque PBS.**
 
 `--pbsPre PBSpreamblefile` By default the `--pbsN` flag will generate a Torque PBS batch file that you will need to edit. You can override this by specifying a preamble file with all the settings that will be used instead of these default values. You can only use this flag with the `--pbsN` option.  **See notes below on running a model using Torque PBS.**
+
+`--permute N` Now for something completely different. If you would like to run the same model repeatedly to create a null distribution for cluster correction, this flag is for you. If you specify this flag and a number of permutations `N`, your `processVoxel` function will be executed over the entire mask `N` times (rather than splitting up the data into `N` pieces and running the function on each piece). If you do this, you can take advantage of ETAC state of the art cluster correction from AFNI. This option is why support for AWS Batch was added. This is computationally intensive, but you can use discounted compute resources on AWS and do permutation testing fairly inexpensively.
+
+If you choose this option, you will probably want to run on a cluster or on AWS Batch. 
 
 `--output` Specify an output prefix that is prepended to output files. This is useful for organizing output for SGE runs; you can specify something like `--output model-stressXtime/mod1` to organize all the output files and execution scripts into a subdirectory. In addition, the model that you used and the calling arguments will be copied with this prefix so that you can remember what you ran. This is modeled off of how FSL FEAT copies the .fsf file into the FEAT directory (so simple and so handy)! (**required**)
 
@@ -157,6 +161,23 @@ The job is an array job that includes as many tasks as you
 specified. You will get an email when your job has completed. At that
 point, you can then come back to this directory and type `make` to
 merge the output files.
+
+## Permutation testing using AWS Batch
+If you have specified permutation testing, you will get a file in the directory created by `npoint` called `make.nf`, which is a nextflow workflow. It is assumed you have installed [nextflow](https://www.nextflow.io/) and installed and configured the [AWS CLI] (https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-install.html). See [AWS installation instructions](installation-aws.md).
+
+There will be a skeleton file called `nextflow.config`. To use AWS Batch, you will need to edit this file to specify the identifier of the container that you are using. If you use the scripts provided 
+You will need to create an S3 bucket on AWS, which will be used to stage data and partial results. Assume this bucket is called `mybucket`.
+
+
+To run, specify the bucket as follows.
+
+```
+nextflow run make.nf -bucket-dir s3://mybucket
+```
+
+You can monitor the jobs by going to the AWS Batch console and looking at the Dashboard. When they have completed, by default, the `make.nf` file specifies that the results should be copied into the current directory. You can change this by modifying the `publishDir` directive in the `make.nf` file.
+
+By default, the job queue is created to allow a maximum of 256 virtual cpus. You can edit this in the AWS Batch console. 
 
 ## Running a model using multicore parallelism
 

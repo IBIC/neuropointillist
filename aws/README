@@ -1,0 +1,4 @@
+To use neuropointillist on AWS, run each of these programs in this order:
+00_dockerbuild  (this builds a local docker container)
+01_createECRRegistry (this creates a registry on AWS for the container, which is not necessary if you publish it to another container registry)
+02_createNpointBatchQueue (this creates an AWS batch queue using spot pricing, so that you can submit your jobs with wild abandon)

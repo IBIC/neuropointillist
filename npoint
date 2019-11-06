@@ -228,6 +228,7 @@ if (permutationMode) { # we are using SGE or SLURM or PBS
     # save the design matrix
     designmatname <- paste(args$output, "designmat.rds", sep="")
     makefilename <- paste(dirname(args$output), "/Makefile", sep="")
+    nextflowfilename <- paste(dirname(args$output), "/make.nf", sep="")
     masterscript.local <- paste(dirname(args$output), "/runme.local", sep="")
     saveRDS(designmat,designmatname)
     attach(designmat) # attach to the designmat
@@ -242,6 +243,7 @@ if (permutationMode) { # we are using SGE or SLURM or PBS
         message(e)
         stop("Exiting before generating makefile.")})
     npointWriteMakefilePermute(basename(args$output), names(out), paste(getwd(), "/",args$model,sep=""), basename(designmatname), makefilename, masterscript.local, nSchedulerJobs)
+    npointWriteNextflowPermute(basename(args$output), names(out), paste(getwd(), "/",args$model,sep=""), basename(designmatname), nextflowfilename, nSchedulerJobs)
     npointSplitDataSize(dim(voxeldat)[2],voxeldat,args$output,mask)
 
     if (!is.null(args$sgeN)) {

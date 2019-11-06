@@ -1,0 +1,299 @@
+#!/usr/bin/env python
+
+# Create an AWS Batch queue
+# that is configured to use spot pricing. 
+# with access to a bucket provided on the command line
+# 
+
+
+import boto3
+import botocore
+import json
+import time
+import os
+import base64
+import docker
+import sys
+import subprocess
+from botocore.exceptions import ClientError
+
+if (len(sys.argv) != 2):
+   sys.exit("Usage: " + os.path.basename(__file__) + "bucketname")
+else:
+   bucket=sys.argv[1]
+   print("bucket is " + bucket)
+
+
+ecr = boto3.client('ecr')
+cfn = boto3.client('cloudformation')
+ec2_client = boto3.client('ec2')
+batch = boto3.client('batch')
+iam = boto3.client('iam')
+ssm = boto3.client('ssm')
+s3 = boto3.client('s3')
+
+session = boto3.session.Session()
+region = session.region_name
+account_id = boto3.client('sts').get_caller_identity().get('Account')
+
+
+prefix='npoint'
+# You could provide an optional suffix here if there are multiple users
+suffix='_tara'
+
+batch_sec_group_name = prefix + '_security_user' + suffix
+instance_profile_name = prefix + '_instance_profile' + suffix
+default_env = prefix + '_compute_environment' + suffix
+batch_queue_name = prefix + '_batch_queue' + suffix
+role_name=prefix + 'ecs-s3-access-2234' + suffix
+policy_name= prefix + "_permissionsPolicyForEC2" + suffix
+
+
+# At various places we will create resources. To make them easier to
+# find in the console or programmatically, we define tags that we can
+# use to search for them.
+
+
+tags=[
+    {
+        'Key': 'Application',
+        'Value': prefix
+    }
+]
+
+
+# Use the default VPC
+# 
+
+vpc_filter = [{'Name':'isDefault', 'Values':['true']}]
+default_vpc = ec2_client.describe_vpcs(Filters=vpc_filter)
+vpc_id = default_vpc['Vpcs'][0]['VpcId']
+
+subnet_filter = [{'Name':'vpc-id', 'Values':[vpc_id]}]
+subnets = ec2_client.describe_subnets(Filters=subnet_filter)
+subnet1_id = subnets['Subnets'][0]['SubnetId']
+subnet2_id = subnets['Subnets'][1]['SubnetId']
+
+
+
+# Create the IAM roles required for AWS Batch
+# 
+# By default, IAM users don't have permission to create or modify AWS
+# Batch resources, or perform tasks using the AWS Batch API. This
+# means that they also can't do so using the AWS Batch console or the
+# AWS CLI. To allow IAM users to create or modify resources and submit
+# jobs, you must create IAM policies that grant IAM users permission
+# to use the specific resources and API actions they need. Then,
+# attach those policies to the IAM users or groups that require those
+# permissions.
+# 
+
+
+
+role_description='An IAM role to allow the batch job read and write access to S3'
+
+trust_policy={
+  "Version": "2012-10-17",
+  "Statement": {
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "ecs-tasks.amazonaws.com"
+      },
+      "Action": "sts:AssumeRole"
+    }
+}
+# tags are defined above
+try:
+    response = iam.create_role(
+        Path="/",
+        RoleName=role_name,
+        AssumeRolePolicyDocument=json.dumps(trust_policy),
+        Description=role_description,
+        Tags=tags
+    )
+
+except Exception as e:
+    print(e)
+
+
+# Having created the role, we need to attach to it a permissions
+# policy that gives it the ability to access our S3 bucket.
+
+
+bucket_resource="arn:aws:s3:::"+bucket+"/*"
+permissions_policy= {
+  "Version": "2012-10-17",
+  "Statement": {
+    "Effect": "Allow",
+    "Action": "s3:*",
+    "Resource": bucket_resource
+  }
+}
+try:
+    response = iam.put_role_policy(
+      RoleName=role_name,
+      PolicyName=policy_name,
+      PolicyDocument=json.dumps(permissions_policy)
+    )
+except Exception as e:
+    print(e)
+
+
+# To use spot pricing, we need to create a role that grants the spot
+# fleet permissions to do things.
+
+
+role_name='AmazonEC2SpotFleetRole'
+role_description='Role that grants the Spot Fleet permission to bid on, launch, tag, and terminate instances'
+role_policy={
+    "Version": "2012-10-17",
+    "Statement": [ {"Sid": "",
+                    "Effect": "Allow",
+                    "Principal": { "Service":"spotfleet.amazonaws.com" },
+                    "Action": "sts:AssumeRole" }
+                ] }
+
+try:
+    response = iam.create_role(
+        Path="/",
+        RoleName=role_name,
+        AssumeRolePolicyDocument=json.dumps(role_policy),
+        Description=role_description,
+        Tags=tags #defined above
+    )
+
+except Exception as e:
+    print(e)
+    
+try: 
+    response = response = iam.attach_role_policy(
+      RoleName=role_name,
+      PolicyArn='arn:aws:iam::aws:policy/service-role/AmazonEC2SpotFleetTaggingRole'
+    )
+
+except Exception as e:
+    print(e)
+   
+
+response = iam.create_service_linked_role(
+    AWSServiceName='spot.amazonaws.com')
+
+response = iam.create_service_linked_role(
+    AWSServiceName='spotfleet.amazonaws.com')
+
+
+# Create batch service role if this does not exist.
+
+
+try:
+    response = iam.get_role(
+    RoleName='AWSBatchServiceRole'
+    )
+    serviceRole= response['Role']['Arn']
+except Exception as e:
+    if(e.response['Error']['Code']=='NoSuchEntity'):
+       print("AWSBatchServiceRole does not exist. Creating.")
+       subprocess.call("./createAWSBatchServiceRole")
+
+
+response = iam.get_role(
+    RoleName='AmazonEC2SpotFleetRole'
+)
+spotIamFleetRole= response['Role']['Arn']
+
+
+
+response = iam.get_role(
+    RoleName=role_name
+)
+batchTaskRoleArn= response['Role']['Arn']
+
+# Create a security group
+# 
+# A security group acts as a virtual firewall for your instance to
+# control inbound and outbound traffic. 
+
+# note that batch_sec_group_name is set above
+
+sg = ec2_client.create_security_group(
+    Description='security group for Neuropoint Environment',
+    GroupName=batch_sec_group_name,
+    VpcId=vpc_id
+)
+batch_sec_group_id=sg["GroupId"]
+
+
+sg = ec2_client.describe_security_groups(
+    GroupNames=[
+        batch_sec_group_name,
+    ]
+)
+batch_sec_group_id=sg['SecurityGroups'][0]['GroupId']
+
+
+# Check for ecs instance role (and if it does not exist, we would need to create it)
+
+response = iam.get_role(
+    RoleName='ecsInstanceRole'
+)
+instanceRoleArn= response['Role']['Arn']
+
+iam.create_instance_profile(
+    InstanceProfileName=instance_profile_name
+)
+
+iam.add_role_to_instance_profile(
+    InstanceProfileName=instance_profile_name,
+    RoleName='ecsInstanceRole'
+)
+
+
+# Create the required AWS batch environment.
+
+response = batch.create_compute_environment(
+    computeEnvironmentName=default_env,
+    type='MANAGED',
+    state='ENABLED',
+    computeResources={
+        'type': 'SPOT',
+        'minvCpus': 0,
+        'maxvCpus': 10,
+        'instanceTypes': [
+            'optimal',
+        ],
+        'subnets': 
+            [subnet1_id],
+        'securityGroupIds': [batch_sec_group_id],
+        'instanceRole': 'ecsInstanceRole',
+        'bidPercentage': 100,
+        'spotIamFleetRole': spotIamFleetRole,
+    },
+    serviceRole= serviceRole
+)
+
+
+#Create the AWS Batch Job Queue
+# 
+# Jobs are submitted to a job queue, where they reside until they are
+# able to be scheduled to run in a compute environment. An AWS account
+# can have multiple job queues. For example, you might create a queue
+# that uses Amazon EC2 On-Demand instances for high priority jobs and
+# another queue that uses Amazon EC2 Spot Instances for low-priority
+# jobs. Job queues have a priority that is used by the scheduler to
+# determine which jobs in which queue should be evaluated for
+# execution first.
+# 
+
+
+response = batch.create_job_queue(
+    jobQueueName=batch_queue_name,
+    state='ENABLED',
+    priority=1,
+    computeEnvironmentOrder=[
+        {
+            'order': 1,
+            'computeEnvironment': default_env
+        },
+    ]
+)
+print("Created " + batch_queue_name)

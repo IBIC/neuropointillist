@@ -1,0 +1,80 @@
+#!/usr/bin/env python
+# create an AWS ECR repository in which to run neuropointillist
+# upload existing docker container called "neurpointillist-nextflow"
+# to the cloud to run
+# 
+
+import boto3
+import botocore
+import base64
+import docker
+
+from botocore.exceptions import ClientError
+
+ecr = boto3.client('ecr')
+ec2_client = boto3.client('ec2')
+batch = boto3.client('batch')
+iam = boto3.client('iam')
+ssm = boto3.client('ssm')
+s3 = boto3.client('s3')
+
+session = boto3.session.Session()
+region = session.region_name
+account_id = boto3.client('sts').get_caller_identity().get('Account')
+
+
+# this is the name of the neuropoint repo that we will create in ECR
+repo = 'neuropointillist-nextflow' 
+
+
+# ### [Create the ECR Repository]
+
+# Amazon Elastic Container Registry (Amazon ECR) provides API
+# operations to create, monitor, and delete image repositories and set
+# permissions that control who can access them. You can perform the
+# same actions in the Repositories section of the Amazon ECR
+# console. Amazon ECR also integrates with the Docker CLI allowing you
+# to push and pull images from your development environments to your
+# repositories.
+
+
+
+try:
+    response = ecr.create_repository(
+     repositoryName=repo
+    )
+except Exception as e:
+    if (e.response['Error']['Code']=='RepositoryAlreadyExistsException'):
+         print("The repository " + repo + " already exists. I'll just use it.")
+         print("But make sure you don't accumulate containers in this repository that you are not using. You can remove them by the link to the AWS Console that will be printed at the end.")
+    else:
+        print(e)
+
+# You need to get a token to access the repository.
+login = ecr.get_authorization_token()
+b64token = login['authorizationData'][0]['authorizationToken'].encode('utf-8')
+username, password = base64.b64decode(b64token).decode('utf-8').split(':')
+registry = login['authorizationData'][0]['proxyEndpoint']
+
+client = docker.from_env()
+client.login(username, password, registry=registry)
+
+
+# We compiled the neuropointillist docker image in the previous step
+# and called it neuropointillist-nextflow
+
+
+try:
+    img = client.images.get('neuropointillist-nextflow')
+except:
+     print("Cannot find image" + repo + ". Make sure that you created it by running the script 00_dockerbuild.")
+
+
+registry_with_name = registry.replace('https://', '') + '/' + repo
+img.tag(registry_with_name, tag='latest')
+client.images.push(registry_with_name, tag='latest')
+
+
+print("You can see your repository, to either clean up old images or delete it, at the link below.")
+print('https://{0}.console.aws.amazon.com/ecr/repositories/{1}/?region={0}'.format(region, repo))
+

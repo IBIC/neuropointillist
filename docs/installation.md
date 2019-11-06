@@ -1,7 +1,14 @@
 
 # Installation
 
-This is a brief overview of installation instructions for people who are fairly comfortable installing things on their systems. More detailed instructions for [MacOS](installation-mac.md), [Linux](installation-linux.md), and [Windows 10](installation-windows.md) are also available. 
+This is a brief overview of installation instructions for people who
+are fairly comfortable installing things on their systems. More
+detailed instructions for [MacOS](installation-mac.md),
+[Linux](installation-linux.md), and
+[Windows 10](installation-windows.md) are also available. Further,
+part of the beauty of brute force computing is that you can pay for cloud
+computing to run your code if you do not have a cluster. If you want
+to do this you should see the [optional installation instructions for AWS](installation-aws.md).
 
 You will need the R packages `Rniftilib`, `argparse`,  `doParallel` and `reticulate` to be installed. 
 
