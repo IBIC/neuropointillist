@@ -177,7 +177,8 @@ nextflow run make.nf -bucket-dir s3://mybucket
 
 You can monitor the jobs by going to the AWS Batch console and looking at the Dashboard. When they have completed, by default, the `make.nf` file specifies that the results should be copied into the current directory. You can change this by modifying the `publishDir` directive in the `make.nf` file.
 
-By default, the job queue is created to allow a maximum of 256 virtual cpus. You can edit this in the AWS Batch console. 
+By default, the job queue is created to allow a maximum of 256 virtual cpus. You can increase this in the AWS Batch console.
+
 
 ## Running a model using multicore parallelism
 
