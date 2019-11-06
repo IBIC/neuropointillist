@@ -16,8 +16,7 @@ before moving on to AWS. This will allow you to test your docker
 container and workflow.
 
 ## Get an AWS account if you do not have one
-You will need to [create an AWS account]
-(https://aws.amazon.com/premiumsupport/knowledge-center/create-and-activate-aws-account/)
+You will need to [create an AWS account](https://aws.amazon.com/premiumsupport/knowledge-center/create-and-activate-aws-account/)
 if you do not have one. If you are part of a participating educational
 institution and have not joined
 [AWS Educate](https://aws.amazon.com/education/awseducate/), you might
@@ -34,8 +33,7 @@ control AWS resources from your development computer using the shell
 (AWS CLI)
 and using Python (AWS SDK for Python).
 
-First, install the [AWS CLI]
-(https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-install.html)
+First, install the [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-install.html)
 on your platform. You will also need to [configure it](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-configure.html).
 
 Then install the [AWS SDK for Python](https://aws.amazon.com/sdk-for-python/)
@@ -133,13 +131,12 @@ AWS Batch Queue, create a bucket either using
 or the
 [CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-services-s3.html).
 Note that this name needs to be globally unique, so common names like
-`mybucket` and
-`bucketname`enecccceeflklndngbiubkkdrfdejjjhchigitihieek
+`mybucket` 
 will be taken.
 
 To create the AWS Batch Queue, provide the bucketname as follows.
 ```
-02_createNpointBatchQueue bucketname
+02_createNpointBatchQueue mybucket
 ```
 
 ## Cleaning Up When Done
