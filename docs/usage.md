@@ -165,14 +165,29 @@ merge the output files.
 ## Permutation testing using AWS Batch
 If you have specified permutation testing, you will get a file in the directory created by `npoint` called `make.nf`, which is a nextflow workflow. It is assumed you have installed [nextflow](https://www.nextflow.io/) and installed and configured the [AWS CLI] (https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-install.html). See [AWS installation instructions](installation-aws.md).
 
-There will be a skeleton file called `nextflow.config`. To use AWS Batch, you will need to edit this file to specify the identifier of the container that you are using. If you use the scripts provided 
-You will need to create an S3 bucket on AWS, which will be used to stage data and partial results. Assume this bucket is called `mybucket`.
+There will be a skeleton file called `nextflow.config`. To use AWS Batch, you will need to edit this file to specify the identifier of the container that you are using, replacing the string `FILLTHISIN`.
+For example, a configuration file might look like this, where the container is in an ECR repository under your account (not this made up number), in your region (not necessarily us-west-2) and the queue has your username in it (not taramad).
+```
+process {
+    withName:npointrun {
+	container='834409999999.dkr.ecr.us-west-2.amazonaws.com/neuropointillist-nextflow:latest'
+	executor="awsbatch"
+	queue="npoint_batch_queue_taramad"
+    }
+}
+
+docker {
+    enabled = true
+}
+```
+
+You will need to create an S3 bucket on AWS, which will be used to stage data and partial results. Assume this bucket is called `mybucket`. You will probably want to store your work within a "subdirectory" of this bucket, such as `mybucket/work`.
 
 
-To run, specify the bucket as follows.
+To run, in your working directory specify the work directory in the bucket as follows.
 
 ```
-nextflow run make.nf -bucket-dir s3://mybucket
+nextflow run make.nf -bucket-dir s3://mybucket/work
 ```
 
 You can monitor the jobs by going to the AWS Batch console and looking at the Dashboard. When they have completed, by default, the `make.nf` file specifies that the results should be copied into the current directory. You can change this by modifying the `publishDir` directive in the `make.nf` file.

@@ -1,11 +1,4 @@
 #!/usr/bin/env python
-
-# Create an AWS Batch queue
-# that is configured to use spot pricing. 
-# with access to a bucket provided on the command line
-# 
-
-
 import boto3
 import botocore
 import json
@@ -15,10 +8,11 @@ import base64
 import docker
 import sys
 import subprocess
+import getpass
 from botocore.exceptions import ClientError
 
 if (len(sys.argv) != 2):
-   sys.exit("Usage: " + os.path.basename(__file__) + "bucketname")
+   sys.exit("Usage: " + os.path.basename(__file__) + " bucketname")
 else:
    bucket=sys.argv[1]
    print("bucket is " + bucket)
@@ -38,14 +32,17 @@ account_id = boto3.client('sts').get_caller_identity().get('Account')
 
 
 prefix='npoint'
-# You could provide an optional suffix here if there are multiple users
-suffix='_tara'
+
+
+username = getpass.getuser()
+suffix='_' + username
+
 
 batch_sec_group_name = prefix + '_security_user' + suffix
 instance_profile_name = prefix + '_instance_profile' + suffix
 default_env = prefix + '_compute_environment' + suffix
 batch_queue_name = prefix + '_batch_queue' + suffix
-role_name=prefix + 'ecs-s3-access-2234' + suffix
+s3_role_name=prefix + 'ecs-s3-access-2234' + suffix
 policy_name= prefix + "_permissionsPolicyForEC2" + suffix
 
 
@@ -62,6 +59,9 @@ tags=[
 ]
 
 
+
+
+
 # Use the default VPC
 # 
 
@@ -76,67 +76,37 @@ subnet2_id = subnets['Subnets'][1]['SubnetId']
 
 
 
-# Create the IAM roles required for AWS Batch
-# 
-# By default, IAM users don't have permission to create or modify AWS
-# Batch resources, or perform tasks using the AWS Batch API. This
-# means that they also can't do so using the AWS Batch console or the
-# AWS CLI. To allow IAM users to create or modify resources and submit
-# jobs, you must create IAM policies that grant IAM users permission
-# to use the specific resources and API actions they need. Then,
-# attach those policies to the IAM users or groups that require those
-# permissions.
-# 
+
+
+def bucket_exists(bucket_name):
+    """Determine whether bucket_name exists and the user has permission to access it
+
+    :param bucket_name: string
+    :return: True if the referenced bucket_name exists, otherwise False
+    """
+
+    s3 = boto3.client('s3')
+    try:
+        response = s3.head_bucket(Bucket=bucket_name)
+    except ClientError as e:
+        print("Bucket name " + bucket + " not found; creating it.")
+        return False
+    print("Bucket name " + bucket + " exists and is accessible.")
+    return True
 
 
 
-role_description='An IAM role to allow the batch job read and write access to S3'
+# Create bucket if it does not exist
 
-trust_policy={
-  "Version": "2012-10-17",
-  "Statement": {
-      "Effect": "Allow",
-      "Principal": {
-        "Service": "ecs-tasks.amazonaws.com"
-      },
-      "Action": "sts:AssumeRole"
-    }
-}
-# tags are defined above
-try:
-    response = iam.create_role(
-        Path="/",
-        RoleName=role_name,
-        AssumeRolePolicyDocument=json.dumps(trust_policy),
-        Description=role_description,
-        Tags=tags
-    )
+if not bucket_exists(bucket): # create it
+ try:
+       s3_client = boto3.client('s3', region_name=region)
+       location = {'LocationConstraint': region}
+       s3_client.create_bucket(Bucket=bucket,
+                                   CreateBucketConfiguration=location)
+ except ClientError as e:
+       print(e)
 
-except Exception as e:
-    print(e)
-
-
-# Having created the role, we need to attach to it a permissions
-# policy that gives it the ability to access our S3 bucket.
-
-
-bucket_resource="arn:aws:s3:::"+bucket+"/*"
-permissions_policy= {
-  "Version": "2012-10-17",
-  "Statement": {
-    "Effect": "Allow",
-    "Action": "s3:*",
-    "Resource": bucket_resource
-  }
-}
-try:
-    response = iam.put_role_policy(
-      RoleName=role_name,
-      PolicyName=policy_name,
-      PolicyDocument=json.dumps(permissions_policy)
-    )
-except Exception as e:
-    print(e)
 
 
 # To use spot pricing, we need to create a role that grants the spot
@@ -162,8 +132,12 @@ try:
         Tags=tags #defined above
     )
 
-except Exception as e:
-    print(e)
+except ClientError as e:
+    if e.response['Error']['Code'] == 'EntityAlreadyExists':
+        print(role_name + " already exists")
+    else:
+        print("Unexpected error: %s" % e)
+    
     
 try: 
     response = response = iam.attach_role_policy(
@@ -175,25 +149,184 @@ except Exception as e:
     print(e)
    
 
-response = iam.create_service_linked_role(
-    AWSServiceName='spot.amazonaws.com')
-
-response = iam.create_service_linked_role(
-    AWSServiceName='spotfleet.amazonaws.com')
-
-
-# Create batch service role if this does not exist.
-
-
 try:
-    response = iam.get_role(
-    RoleName='AWSBatchServiceRole'
-    )
+    response = iam.create_service_linked_role(
+       AWSServiceName='spot.amazonaws.com')
+except ClientError as e:
+    if e.response['Error']['Code'] == 'InvalidInput':
+        print("spot.amazonaws.com service linked role already exists")
+    else:
+        print("Unexpected error: %s" % e)
+    
+try: 
+    response = iam.create_service_linked_role(
+       AWSServiceName='spotfleet.amazonaws.com')
+except ClientError as e:
+    if e.response['Error']['Code'] == 'InvalidInput':
+        print("spotfleet.amazonaws.com service linked role already exists")
+    else:
+        print("Unexpected error: %s" % e)
+
+
+def createBatchServiceRole():
+    """Create a batch service role if it doesn't exist
+    """
+    
+    role_name='AWSBatchServiceRole'
+    trust_relationship={
+        "Version": "2012-10-17",
+        "Statement": [{
+            "Effect": "Allow",
+            "Principal": {"Service": "batch.amazonaws.com"},
+            "Action": "sts:AssumeRole"
+        }]
+    }
+    batch_service_role_policy={
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Effect": "Allow",
+                "Action": [
+                    "ec2:DescribeAccountAttributes",
+                    "ec2:DescribeInstances",
+                    "ec2:DescribeInstanceAttribute",
+                    "ec2:DescribeSubnets",
+                    "ec2:DescribeSecurityGroups",
+                    "ec2:DescribeKeyPairs",
+                    "ec2:DescribeImages",
+                    "ec2:DescribeImageAttribute",
+                    "ec2:DescribeSpotInstanceRequests",
+                    "ec2:DescribeSpotFleetInstances",
+                    "ec2:DescribeSpotFleetRequests",
+                    "ec2:DescribeSpotPriceHistory",
+                    "ec2:DescribeVpcClassicLink",
+                    "ec2:DescribeLaunchTemplateVersions",
+                    "ec2:CreateLaunchTemplate",
+                    "ec2:DeleteLaunchTemplate",
+                    "ec2:RequestSpotFleet",
+                    "ec2:CancelSpotFleetRequests",
+                    "ec2:ModifySpotFleetRequest",
+                    "ec2:TerminateInstances",
+                    "ec2:RunInstances",
+                    "autoscaling:DescribeAccountLimits",
+                    "autoscaling:DescribeAutoScalingGroups",
+                    "autoscaling:DescribeLaunchConfigurations",
+                    "autoscaling:DescribeAutoScalingInstances",
+                    "autoscaling:CreateLaunchConfiguration",
+                    "autoscaling:CreateAutoScalingGroup",
+                    "autoscaling:UpdateAutoScalingGroup",
+                    "autoscaling:SetDesiredCapacity",
+                    "autoscaling:DeleteLaunchConfiguration",
+                    "autoscaling:DeleteAutoScalingGroup",
+                    "autoscaling:CreateOrUpdateTags",
+                    "autoscaling:SuspendProcesses",
+                    "autoscaling:PutNotificationConfiguration",
+                    "autoscaling:TerminateInstanceInAutoScalingGroup",
+                    "ecs:DescribeClusters",
+                    "ecs:DescribeContainerInstances",
+                    "ecs:DescribeTaskDefinition",
+                    "ecs:DescribeTasks",
+                    "ecs:ListClusters",
+                    "ecs:ListContainerInstances",
+                    "ecs:ListTaskDefinitionFamilies",
+                    "ecs:ListTaskDefinitions",
+                    "ecs:ListTasks",
+                    "ecs:CreateCluster",
+                    "ecs:DeleteCluster",
+                    "ecs:RegisterTaskDefinition",
+                    "ecs:DeregisterTaskDefinition",
+                    "ecs:RunTask",
+                    "ecs:StartTask",
+                    "ecs:StopTask",
+                    "ecs:UpdateContainerAgent",
+                    "ecs:DeregisterContainerInstance",
+                    "logs:CreateLogGroup",
+                    "logs:CreateLogStream",
+                    "logs:PutLogEvents",
+                    "logs:DescribeLogGroups",
+                    "iam:GetInstanceProfile",
+                    "iam:GetRole"
+                    "s3:*",
+                ],
+                "Resource": "*"
+            },
+            {
+                "Effect": "Allow",
+                "Action": "iam:PassRole",
+                "Resource": [
+                    "*"
+                ],
+                "Condition": {
+                    "StringEquals": {
+                        "iam:PassedToService": [
+                            "ec2.amazonaws.com",
+                            "ec2.amazonaws.com.cn",
+                            "ecs-tasks.amazonaws.com"
+                        ]
+                    }
+                }
+            },
+            {
+                "Effect": "Allow",
+                "Action": "iam:CreateServiceLinkedRole",
+                "Resource": "*",
+                "Condition": {
+                    "StringEquals": {
+                        "iam:AWSServiceName": [
+                            "spot.amazonaws.com",
+                            "spotfleet.amazonaws.com",
+                            "autoscaling.amazonaws.com",
+                            "ecs.amazonaws.com"
+                        ]
+                    }
+                }
+            },
+            {
+                "Effect": "Allow",
+                "Action": [
+                    "ec2:CreateTags"
+                ],
+                "Resource": [
+                    "*"
+                ],
+                "Condition": {
+                    "StringEquals": {
+                        "ec2:CreateAction": "RunInstances"
+                    }
+                }
+            }
+        ]
+    }
+  
+
+    try:
+         response = iam.get_role(RoleName=role_name)
+    except Exception as e:
+        if(e.response['Error']['Code']=='NoSuchEntity'):
+            print("AWSBatchServiceRole does not exist. Creating.")
+            response = iam.create_role(
+                   Path="/",
+                   RoleName=role_name,
+                   AssumeRolePolicyDocument=json.dumps(trust_relationship),
+                   Description='AWS Batch Service Role',
+                   Tags=tags) 
+            response = iam.put_role_policy(
+                 RoleName=role_name,
+                 PolicyName=role_name,
+                 PolicyDocument=json.dumps(batch_service_role_policy))
+            response = iam.get_role(RoleName=role_name)
     serviceRole= response['Role']['Arn']
-except Exception as e:
-    if(e.response['Error']['Code']=='NoSuchEntity'):
-       print("AWSBatchServiceRole does not exist. Creating.")
-       subprocess.call("./createAWSBatchServiceRole")
+    return serviceRole
+
+
+
+# create batch service role if this does not exist
+serviceRole=createBatchServiceRole()
+
+
+
+#print(serviceRole)
+
 
 
 response = iam.get_role(
@@ -215,12 +348,19 @@ batchTaskRoleArn= response['Role']['Arn']
 
 # note that batch_sec_group_name is set above
 
-sg = ec2_client.create_security_group(
-    Description='security group for Neuropoint Environment',
-    GroupName=batch_sec_group_name,
-    VpcId=vpc_id
-)
-batch_sec_group_id=sg["GroupId"]
+try:
+    sg = ec2_client.create_security_group(
+        Description='security group for Neuropoint Environment',
+        GroupName=batch_sec_group_name,
+        VpcId=vpc_id
+    )
+except Exception as e:
+    if(e.response['Error']['Code']=='InvalidGroup.Duplicate'):
+        print("Security group already exists")
+    else:
+        print("Unexpected error creating security group: " + e.response['Error']['Code'])
+        
+
 
 
 sg = ec2_client.describe_security_groups(
@@ -230,47 +370,194 @@ sg = ec2_client.describe_security_groups(
 )
 batch_sec_group_id=sg['SecurityGroups'][0]['GroupId']
 
+print(batch_sec_group_id)
 
-# Check for ecs instance role (and if it does not exist, we would need to create it)
 
-response = iam.get_role(
-    RoleName='ecsInstanceRole'
-)
-instanceRoleArn= response['Role']['Arn']
 
-iam.create_instance_profile(
+def createEcsInstanceRole():
+    """Create ecs Instance role and create if it doesn't exist
+    """
+    role_name='ecsInstanceRole'
+    trust_policy={
+        "Version": "2008-10-17",
+        "Statement": [
+            {
+                "Sid": "",
+                "Effect": "Allow",
+                "Principal": {
+                    "Service": "ec2.amazonaws.com"
+                },
+                "Action": "sts:AssumeRole"
+            }
+        ]
+    }
+
+    ec2_container_policy={
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Effect": "Allow",
+                "Action": [
+                    "ec2:DescribeTags",
+                    "ecs:CreateCluster",
+                    "ecs:DeregisterContainerInstance",
+                    "ecs:DiscoverPollEndpoint",
+                    "ecs:Poll",
+                    "ecs:RegisterContainerInstance",
+                    "ecs:StartTelemetrySession",
+                    "ecs:UpdateContainerInstancesState",
+                    "ecs:Submit*",
+                    "ecr:GetAuthorizationToken",
+                    "ecr:BatchCheckLayerAvailability",
+                    "ecr:GetDownloadUrlForLayer",
+                    "ecr:BatchGetImage",
+                    "logs:CreateLogStream",
+                    "logs:PutLogEvents"
+                ],
+                "Resource": "*"
+            }
+        ]
+    }
+
+    try:
+        response = iam.get_role(
+            RoleName=role_name
+        )
+    except Exception as e:
+        if(e.response['Error']['Code']=='NoSuchEntity'):
+            print("ecsInstanceRole does not exist. Creating.")
+            response = iam.create_role(
+                RoleName=role_name,
+                AssumeRolePolicyDocument=json.dumps(trust_policy),
+                Tags=tags)
+            response = iam.put_role_policy(
+                  RoleName=role_name,
+                  PolicyName='AmazonEC2ContainerServiceforEC2Role',
+                  PolicyDocument=json.dumps(ec2_container_policy))
+            response = iam.get_role(RoleName=role_name)
+    return(response['Role']['Arn'])
+
+
+
+instanceRoleArn=createEcsInstanceRole()
+
+
+
+ec2_container_policy={
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "ec2:DescribeTags",
+                "ecs:CreateCluster",
+                "ecs:DeregisterContainerInstance",
+                "ecs:DiscoverPollEndpoint",
+                "ecs:Poll",
+                "ecs:RegisterContainerInstance",
+                "ecs:StartTelemetrySession",
+                "ecs:UpdateContainerInstancesState",
+                "ecs:Submit*",
+                "ecr:GetAuthorizationToken",
+                "ecr:BatchCheckLayerAvailability",
+                "ecr:GetDownloadUrlForLayer",
+                "ecr:BatchGetImage",
+                "logs:CreateLogStream",
+                "logs:PutLogEvents"
+            ],
+            "Resource": "*"
+        }
+    ]
+}
+try:
+    response = iam.put_role_policy(
+        RoleName='ecsInstanceRole',
+        PolicyName='AmazonEC2ContainerServiceforEC2Role',
+        PolicyDocument=json.dumps(ec2_container_policy))
+except ClientError as e:
+    print(e)
+    
+
+
+bucket_resource="arn:aws:s3:::"+bucket+"/*"
+permissions_policy= {
+  "Version": "2012-10-17",
+  "Statement": {
+    "Effect": "Allow",
+    "Action": "s3:*",
+    "Resource": bucket_resource
+  }
+}
+try:
+    response = iam.put_role_policy(
+      RoleName='ecsInstanceRole',
+      PolicyName='S3AccessToBucket',
+      PolicyDocument=json.dumps(permissions_policy)
+    )
+except Exception as e:
+    print(e)
+
+
+try:
+    prof = iam.create_instance_profile(
+        InstanceProfileName=instance_profile_name
+    )
+  
+except Exception as e:
+        if(e.response['Error']['Code']=='EntityAlreadyExists'):
+            print("Instance profile name "+instance_profile_name +" already exists")
+        else:
+            print("Unexpected error creating instance profile: " + e.response['Error']['Code'])
+ 
+result = iam.get_instance_profile(
     InstanceProfileName=instance_profile_name
 )
+instance_profile_role=result['InstanceProfile']['Arn']
 
-iam.add_role_to_instance_profile(
-    InstanceProfileName=instance_profile_name,
-    RoleName='ecsInstanceRole'
-)
+
+try:
+    iam.add_role_to_instance_profile(
+        InstanceProfileName=instance_profile_name,
+        RoleName='ecsInstanceRole'
+    )
+
+except Exception as e:
+    if (e.response['Error']['Code']=='LimitExceeded'):
+        print("Role is already attached to instance profile")
+    else:
+        print("Unexpected error adding role to instance profile: " + e.response['Error']['Code'])
+        
+            
+
+
 
 
 # Create the required AWS batch environment.
-
-response = batch.create_compute_environment(
-    computeEnvironmentName=default_env,
-    type='MANAGED',
-    state='ENABLED',
-    computeResources={
-        'type': 'SPOT',
-        'minvCpus': 0,
-        'maxvCpus': 10,
-        'instanceTypes': [
-            'optimal',
-        ],
-        'subnets': 
+try:
+    response = batch.create_compute_environment(
+        computeEnvironmentName=default_env,
+        type='MANAGED',
+        state='ENABLED',
+        computeResources={
+            'type': 'SPOT',
+            'minvCpus': 0,
+            'maxvCpus': 256,
+            'instanceTypes': [
+                'optimal',
+            ],
+            'subnets': 
             [subnet1_id],
-        'securityGroupIds': [batch_sec_group_id],
-        'instanceRole': 'ecsInstanceRole',
-        'bidPercentage': 100,
-        'spotIamFleetRole': spotIamFleetRole,
-    },
-    serviceRole= serviceRole
-)
-
+            'securityGroupIds': [batch_sec_group_id],
+            'instanceRole': instance_profile_role,
+            'bidPercentage': 100,
+            'spotIamFleetRole': spotIamFleetRole,
+        },
+        serviceRole= serviceRole
+    )
+except Exception as e:
+    if (e.response['Error']['Code']=='ClientException'):
+        print("Compute environment already exists")
+    
 
 #Create the AWS Batch Job Queue
 # 
@@ -284,16 +571,26 @@ response = batch.create_compute_environment(
 # execution first.
 # 
 
+try:
+    response = batch.create_job_queue(
+        jobQueueName=batch_queue_name,
+        state='ENABLED',
+        priority=1,
+        computeEnvironmentOrder=[
+            {
+                'order': 1,
+                'computeEnvironment': default_env
+            },
+        ]
+    )
+    print("Created " + batch_queue_name)
+except Exception as e:
+    if (e.response['Error']['Code']=='ClientException'):
+        print("Batch job queue already exists")
 
-response = batch.create_job_queue(
-    jobQueueName=batch_queue_name,
-    state='ENABLED',
-    priority=1,
-    computeEnvironmentOrder=[
-        {
-            'order': 1,
-            'computeEnvironment': default_env
-        },
-    ]
-)
-print("Created " + batch_queue_name)
+
+
+
+
+
+

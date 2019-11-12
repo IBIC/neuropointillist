@@ -21,14 +21,15 @@ npointWriteNextflowPermute <- function(prefix, resultnames, modelfile, designmat
     permuteoutputfile <- paste(resultnames[1], ".${x}.nii.gz", sep="")
 
     # write configuration file
-    configConn <- file("nextflow.config")
+    
+    configConn <- file(paste(dirname(nextflow), "/nextflow.config",sep=""))
     writeLines(c("process {",
                  "withName:npointrun {",
                  "container='FILLTHISIN'",
                  "executor=\"awsbatch\"",
                  paste("queue=\"npoint_batch_queue_", Sys.getenv("LOGNAME"), "\"", sep=""),
                  "}",
-                 "}"
+                 "}",
                  "docker {",
                  "enabled = true",
                  "}"),configConn)
