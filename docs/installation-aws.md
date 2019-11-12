@@ -146,17 +146,22 @@ delete any resources that you have used on AWS.
 ## Cleanup Step 1. Delete the AWS Batch Queue
 You can remove the AWS Batch queue with the command
 ```
-deleteNpointBatchQueue
+03_deleteNpointBatchQueue
 ```
 
 This will remove any jobs and resources you have provisioned, but it
-will not remove your S3 bucket storage. Note that there is no charge
-for the AWS Batch queue unless you are running things. 
+will not remove your S3 bucket storage or your ECR registry. Note that there is no charge
+for the AWS Batch queue unless you are running things. However, there
+is a charge for the S3 bucket storage and for the storage of your
+image on the ECR Registry.
+
+This command will print commands for deleting these resources, or you
+can refer to the commands below. 
 
 ## Cleanup Step 2. Delete the ECR Registry
 You can remove your ECR registry with the comand
 ```
-deleteECRRegistry
+aws ecr delete-repository --force --repository-name neuropointillist-nextflow
 ```
 Note that there is a small charge to store containers in ECR, so you
 will want to delete the registry and save your container for archival
