@@ -4,7 +4,7 @@
 \alias{npointWriteOutputFiles}
 \title{Write the output statistic files}
 \usage{
-npointWriteOutputFiles(prefix, results, mask)
+npointWriteOutputFiles(prefix, results, mask, rds = FALSE)
 }
 \arguments{
 \item{prefix}{Prefix for output, to be prepended to outputs}
@@ -12,6 +12,8 @@ npointWriteOutputFiles(prefix, results, mask)
 \item{results}{Data returned from the processVoxel function}
 
 \item{mask}{A nifti mask that corresponds to the output results}
+
+\item{rds}{Save rds file instead of nii? Default is FALSE.}
 }
 \description{
 This function takes an argument structure that specifies all the parameters

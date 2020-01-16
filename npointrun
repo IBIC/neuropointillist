@@ -18,7 +18,7 @@ parser$add_argument("-m", "--mask",  nargs=1, help="Maskfile to process", requir
 parser$add_argument("-d", "--designmat",  nargs=1, help="Design matrix in RDS format", required=TRUE)
 parser$add_argument("-p", "--permutationfile",  nargs=1, help="File name of the permutation output that includes permutation number", required=FALSE)
 parser$add_argument("--model", nargs=1, help="R code that defines the voxelwise-model and any initialization", required=TRUE)
-
+parser$add_argument("--rds", action="store_true", help="Don't write out nii files. Instead, write out rds files for custom handling.", required=FALSE)
 
 args <- parser$parse_args()
 
@@ -99,7 +99,7 @@ if (!is.null(args$permutationfile)) {
     }
 }
 
-npointWriteOutputFiles(prefix,results,mask)
+npointWriteOutputFiles(prefix,results,mask,rds=args$rds)
 
 
         

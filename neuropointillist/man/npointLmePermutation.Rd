@@ -36,8 +36,9 @@ understands.}
 
 \item{data}{The data frame appropriate for \code{\link[nlme]{lme}}.}
 
-\item{level}{Level for residuals and prediction. Set to 1 for within-person,
-or 0 for between-person.}
+\item{level}{Level for residuals and prediction. Set 0 for between-person.
+For within-person centered variables this option should not make any
+difference.}
 
 \item{lmeOptsResid}{Named list of any additional arguments are passed to
 \code{\link[nlme]{lme}} when it's used to generate the residuals that will
