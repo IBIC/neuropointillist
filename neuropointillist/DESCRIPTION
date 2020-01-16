@@ -1,6 +1,6 @@
 Package: neuropointillist
 Title: Flexible Parallel Modeling of Neuroimaging Data, Point by Point
-Version: 0.0.0.9100
+Version: 0.0.0.9101
 Authors@R: person("Tara", "Madhyastha", email = "tara.madhyastha@gmail.com", role = c("aut", "cre"))
 Description: This package contains R functions and scripts to read in
     neuroimaging data, compute voxel-wise statistics in parallel, and reassemble the
