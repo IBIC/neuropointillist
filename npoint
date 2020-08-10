@@ -6,7 +6,7 @@
 #if (!suppressWarnings(suppressPackageStartupMessages(require(Rniftilib)))) install.packages("Rniftilib", repos="http://R-Forge.R-project.org")
 if (!suppressWarnings(suppressPackageStartupMessages(require(argparse)))) install.packages("argparse")
 if (!suppressWarnings(suppressPackageStartupMessages(require(doParallel)))) install.packages("doParallel")
-suppressWarnings(suppressPackageStartupMessages(library(Rniftilib)))
+suppressWarnings(suppressPackageStartupMessages(library(RNifti)))
 suppressWarnings(suppressPackageStartupMessages(library(argparse)))
 suppressWarnings(suppressPackageStartupMessages(library(doParallel)))
 suppressWarnings(suppressPackageStartupMessages(library(neuropointillist)))
@@ -55,7 +55,7 @@ if (file.exists("readargs.R")) {
 #### Check for mask and read it. It is mandatory and must exist.
 maskfile <- args$mask
 tryCatch({
-    mask <- nifti.image.read(maskfile);
+    mask <- readNifti(maskfile);
 }, error=function(e) {
     cat("Could not read mask file: ", maskfile, "\n")
     stop(e)
@@ -65,11 +65,11 @@ tryCatch({
 mask.dims <- dim(mask)
 
 # reduce to vector and obtain list of nonzero vertices and the x,y,x
-mask.vector <- as.vector(mask[,,])
+mask.vector <- as.vector(mask)
 mask.vertices <- which(mask.vector > 0)
 
 # assemble the indices to create a reverse lookup table
-mask.arrayindices <- data.frame(which(mask[,,] > 0, arr.in=TRUE))
+mask.arrayindices <- data.frame(which(mask > 0, arr.in=TRUE))
 mask.arrayindices$vertex <- mask.vertices
 
 #### Save original arguments for writing out calling info

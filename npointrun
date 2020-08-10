@@ -6,7 +6,7 @@
 #if (!suppressPackageStartupMessages(require(Rniftilib))) install.packages("Rniftilib", repos="http://R-Forge.R-project.org")
 if (!suppressPackageStartupMessages(require(argparse))) install.packages("argparse")
 if (!suppressPackageStartupMessages(require(doParallel))) install.packages("doParallel")
-suppressPackageStartupMessages(library(Rniftilib))
+suppressPackageStartupMessages(library(RNifti))
 suppressPackageStartupMessages(library(argparse))
 suppressPackageStartupMessages(library(doParallel))
 suppressPackageStartupMessages(library(neuropointillist))
@@ -27,14 +27,14 @@ args <- parser$parse_args()
 #### Check for mask and read it. It is mandatory and must exist.
 maskfile <- args$mask
 tryCatch({
-    mask <- nifti.image.read(maskfile);
+    mask <- readNifti(maskfile);
 }, error=function(e) {
     cat("Could not read mask file: ", maskfile, "\n")
     stop(e)
 })
 
 # reduce to vector and obtain list of nonzero vertices
-mask.vector <- as.vector(mask[,,])
+mask.vector <- as.vector(mask)
 mask.vertices <- which(mask.vector > 0)
 nvertices <- length(mask.vertices)
 

@@ -4,7 +4,7 @@
 
 #rniftilib is not in this location
 #if (!suppressPackageStartupMessages(require(Rniftilib))) install.packages("Rniftilib", repos="http://R-Forge.R-project.org")
-suppressPackageStartupMessages(library(Rniftilib))
+suppressPackageStartupMessages(library(RNifti))
 
 # collect arguments
 args <- commandArgs(TRUE)
@@ -25,7 +25,7 @@ ntomerge <- length(args)-2
 ###############################################################################
 #### Read in the first file to merge. It must exist.
 tryCatch({
-    firstmerge.nii <- nifti.image.read(firstmerge);
+    firstmerge.nii <- readNifti(firstmerge);
 }, error=function(e) {
     cat("Could not read nifti file: ", firstmerge, "\n")
     stop(e)
@@ -37,11 +37,7 @@ tryCatch({
 if (file.exists(outputfile)) {
         stop(paste("The output file", outputfile, "exists. Please delete any old results before proceeding."))
     }
-nim <- nifti.image.copy.info(firstmerge.nii)
-nimdat <- firstmerge.nii[,,]
-
-# hide output from this command, which is confusing
-invisible(capture.output(nifti.image.setdatatype(nim, "NIFTI_TYPE_FLOAT32")))
+nimdat <- firstmerge.nii
 
 
 ###############################################################################
@@ -49,14 +45,12 @@ invisible(capture.output(nifti.image.setdatatype(nim, "NIFTI_TYPE_FLOAT32")))
 
 while(ntomerge > 0) {
     idx <- ntomerge+2
-    mim <- nifti.image.read(args[idx])
-    nimdat <- nimdat + mim[,,]
+    mim <- readNifti(args[idx])
+    nimdat <- nimdat + mim
     ntomerge <- ntomerge -1
 }
                 
 ###############################################################################
 #### Write out the merged output image
-nifti.image.alloc.data(nim)
-nim[,,] <- nimdat
-nifti.set.filenames(nim,outputfile)
-nifti.image.write(nim)
+writeNifti(nimdat, outputfile, template=firstmerge.nii, datatype="float")
+

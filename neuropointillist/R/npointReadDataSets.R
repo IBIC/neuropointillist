@@ -19,7 +19,7 @@ npointReadDataSets <- function(args, numberdatasets, mask.vertices) {
     # preallocate data using the total number of files and the size of the first file
 
     firstfile <- args$set1[1]
-    nii <- nifti.image.read(firstfile)
+    nii <- readNifti(firstfile)
     dims <- dim(nii)
     is3d <- length(dims)==3
     is4d <- length(dims)==4
@@ -52,17 +52,17 @@ npointReadDataSets <- function(args, numberdatasets, mask.vertices) {
         }
         
         for(file in set.files) {
-            nii <- nifti.image.read(file)
+            nii <- readNifti(file)
             stopifnot(dims == dim(nii)) #check that dimensions are the same
             if (is3d) {
-                ndat <- nii[,,]
+                ndat <- nii
                 dim(ndat) <- prod(dims)
                                         # reduce to a set of vertices
                 ndat <- ndat[mask.vertices]
                 voxeldat[i,] <-ndat
                 i <- i+1
             } else {#is4d
-                ndat <- nii[,,,]
+                ndat <- nii
                 dim(ndat) <- c(prod(dims[1:3]),dims[4])
                 ndat <- t(ndat)
                 ndat <- ndat[,mask.vertices]
