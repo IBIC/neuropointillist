@@ -128,7 +128,7 @@ npointWriteFile <- function(mask, voxeldata,outputfilename) {
         y <- rep(y, nvolumes)
         y[y==1] <- voxeldata
         dims <- c(mask.dims, nvolumes)
-        writeNifti(as.nifti(array(y,dims), outputfilename, template=mask, datatype="float")
+        writeNifti(array(y,dims), outputfilename, template=mask, datatype="float")
     }
         
 }
