@@ -115,13 +115,6 @@ npointWriteFile <- function(mask, voxeldata,outputfilename) {
         y <- vector(mode="numeric", length=len)
         y[mask.vertices] <- voxeldata
         writeNifti(array(y, mask.dims), outputfilename, template=mask,datatype="float")
-#        nim <- nifti.image.copy.info(mask)
-#        nifti.image.setdatatype(nim, "NIFTI_TYPE_FLOAT32")
-#        nim$dim <- mask.dims
-#        nifti.image.alloc.data(nim)
-#        nim[,,] <- as.array(y,mask.dims)
-#        nifti.set.filenames(nim, outputfilename)
-#        nifti.image.write(nim)
     } else {# a 4d image
         # check for even multiple of volumes
         nvolumes <- length(voxeldata)/length(mask.vertices)
@@ -135,7 +128,7 @@ npointWriteFile <- function(mask, voxeldata,outputfilename) {
         y <- rep(y, nvolumes)
         y[y==1] <- voxeldata
         dims <- c(mask.dims, nvolumes)
-        writeNifti(array(y,dims), outputfilename, datatype="float")
+        writeNifti(as.nifti(array(y,dims), outputfilename, template=mask, datatype="float")
     }
         
 }
@@ -167,7 +160,7 @@ npointSplitDataSize <- function(size, voxeldat, prefix, mask) {
         y[unlist(d1[i])] <- 1
         outputfilename <- paste(prefix, sprintf("%04d",i),".nii.gz",sep="")
         npointWarnIfNiiFileExists(outputfilename)
-        writeNifti(array(y,mask.dims), outputfilename, datatype="float")
+        writeNifti(array(y,mask.dims), outputfilename, template=mask, datatype="float")
                       # now subdat the data
         sz <- length(unlist(d1[i]))
         saveRDS(voxeldat[,start:(start+sz-1)], paste(prefix, sprintf("%04d",i),".rds",sep=""))
