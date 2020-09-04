@@ -22,10 +22,13 @@
 
 library(nlme)
 
+#The code here makes it easy to test the function (uncomment and run these
+#lines, and then you can run what is inside the function):
 #
-#load('nlmemodel/debug.Rdata')
-#attach(designmat)
-#
+#load('nlmemodel/debug.Rdata') #Load the debug data
+#attach(designmat) #attach the design matrix so you have access to the columns
+#v <- 1e5 #choose a test voxel
+#permutationNumber <- 1 #choose a permutation
 
 processVoxel <-function(v) {
   #Get the brain data from voxel `v`
@@ -43,6 +46,8 @@ processVoxel <-function(v) {
   #Winkler, A. M., Ridgway, G. R., Webster, M. A., Smith, S. M., & Nichols, T. E.
   #(2014). Permutation inference for the general linear model. NeuroImage, 92,
   #381–397. https://doi.org/10.1016/j.neuroimage.2014.01.060
+  
+  #First, fit the residuals model and create Y*
   p <- try({
     #exclude `finger` since that's what we want to generate null data for
     residsModel <- nlme::lme(BRAIN ~ 1 + Foot + Lips + WhiteMatter + X + Y + Z + RotX + RotY + RotZ, 
@@ -69,9 +74,11 @@ processVoxel <-function(v) {
     #predictor, while we also retain all of the variance that is systematically
     #related to the covariates.
     y_star <- P_j.epsilon_z + Zy
+    #return the model
     residsModel
   })
   
+  #Target model using the permuted data
   e <- try(mod <- lme(y_star ~ 1 + Finger + Foot + Lips + WhiteMatter + X + Y + Z + RotX + RotY + RotZ, 
                       random = ~ 1 | idnum, 
                       method = c("ML"), 
@@ -88,7 +95,7 @@ processVoxel <-function(v) {
     #Finger condition (there are also other ways to get these values):
     #
     #          1 + Finger + Foot + Lips + WhiteMatter + X + Y + Z + RotX + RotY + RotZ
-    contr <- c(0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+    contr <- c(0,       1,     0,     0,            0,  0,  0,  0,     0,     0,     0)
     out <- anova(mod, L = contr)
     finger.p <- out[["p-value"]]
     finger.Z <- qnorm(finger.p)
