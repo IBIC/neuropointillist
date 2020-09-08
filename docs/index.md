@@ -19,6 +19,9 @@ This is a quick start tutorial that uses simulated fMRI data in the directory `e
 ## [Advanced fMRI Example](fingerfootlips.example.md)
 This tutorial uses a reproducibility data set downloaded from OpenNeuro to illustrate some of the more interesting things one might do in R that are difficult to achieve with fMRI software. 
 
+## [Permutation testing fMRI Example](fingerfootlips_permute.md)
+This tutorial uses the data set and results from the advanced example, above, to demonstrate how you can use Neuropointillist to implement permutation testing approaches to cluster-based corrections for multiple comparisons (specifically, Equitable Thresholding and Clustering in AFNI).
+
 ## [Flournoy example (longitudinal)](flournoy.example.md)
 This tutorial illustrates the kinds of analyses that form the primary motivation for `neuropointillist`: the ability to compare forms of change and run SEM growh models on single-subject data that has completed first level processing. 
 
