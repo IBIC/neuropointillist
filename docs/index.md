@@ -13,11 +13,14 @@ This code will make it so that when you type `npoint` or `npointrun` at the comm
 
 For detailed usage information, see the [Usage](usage.md). If you just want to get going, read on!
 
-## [Simple fMRI Example](fmri.example.md)
+## [Simple fMRI example](fmri.example.md)
 This is a quick start tutorial that uses simulated fMRI data in the directory `example.rawfmri`. This explains how to set up a model, debug it, and run it on raw fMRI data. This is primarily for educational purposes, because fMRI software is a lot faster and better at doing this).
 
-## [Advanced fMRI Example](fingerfootlips.example.md)
+## [Advanced fMRI example](fingerfootlips.example.md)
 This tutorial uses a reproducibility data set downloaded from OpenNeuro to illustrate some of the more interesting things one might do in R that are difficult to achieve with fMRI software. 
+
+## [Permutation testing fMRI example](fingerfootlips_permute.md)
+This tutorial uses the data set and results from the advanced example, above, to demonstrate how you can use Neuropointillist to implement permutation testing approaches to cluster-based corrections for multiple comparisons (specifically, Equitable Thresholding and Clustering in AFNI).
 
 ## [Flournoy example (longitudinal)](flournoy.example.md)
 This tutorial illustrates the kinds of analyses that form the primary motivation for `neuropointillist`: the ability to compare forms of change and run SEM growh models on single-subject data that has completed first level processing. 
