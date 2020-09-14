@@ -62,11 +62,11 @@ Start R at the `bash` command line.
 ```bash
 R
 ```
-Within R, install the dependencies `argparse`, `Rniftilib`, `doParallel` and `reticulate`. 
+Within R, install the dependencies `argparse`, `RNifti`, `doParallel` and `reticulate`. 
 
 ```R
 install.packages("argparse")
-install.packages("http://ascopa.server4you.net/ubuntu/ubuntu/pool/universe/r/r-cran-rniftilib/r-cran-rniftilib_0.0-35.r79.orig.tar.xz", repos=NULL)
+install.packages("RNifti")
 install.packages("doParallel")
 install.packages("reticulate")
 ```

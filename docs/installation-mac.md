@@ -47,11 +47,11 @@ git clone https://github.com/IBIC/neuropointillist.git
 
 Change into the directory where you have downloaded `neuropointillist`. There will be a subdirectory called `neuropointillist` within that directory; this contains the R package. 
 
-Start R and install the dependencies `argparse`, `Rniftilib`, `doParallel` and `reticulate`. 
+Start R and install the dependencies `argparse`, `RNifti`, `doParallel` and `reticulate`. 
 
 ```R
 install.packages("argparse")
-install.packages("http://ascopa.server4you.net/ubuntu/ubuntu/pool/universe/r/r-cran-rniftilib/r-cran-rniftilib_0.0-35.r79.orig.tar.xz", repos=NULL)
+install.packages("RNifti")
 install.packages("doParallel")
 install.packages("reticulate")
 ```

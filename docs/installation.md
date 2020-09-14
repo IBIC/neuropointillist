@@ -10,13 +10,19 @@ part of the beauty of brute force computing is that you can pay for cloud
 computing to run your code if you do not have a cluster. If you want
 to do this you should see the [optional installation instructions for AWS](installation-aws.md).
 
-You will need the R packages `Rniftilib`, `argparse`,  `doParallel` and `reticulate` to be installed. 
+**Note** 
+R version 4.0 and up causes the R package `Rniftilib` to
+fail. I replaced this with the package `RNifti`.  If you run into any
+issues with the latest version of neuropointillist, report the issue
+and try (if you can) backtrack to an older version of R and use the
+`Pre-AWS` release, installing `Rniftilib` as below. 
+
+
+You will need the R packages `RNifti`, `argparse`,  `doParallel` and `reticulate` to be installed. 
 
 `argparse` requires Python version >= 2.7 and Python packages `argparse`.
 
-**Instructions for installing `Rniftilib` may be found [here.](http://r-forge.r-project.org/R/?group_id=427)**
-
-Note that as of 9/2017, `Rniftilib` is not installing per these instructions. You can install from source (from any mirror) as follows.
+If you need to install `Rniftilib` to support an older neuropointillist release, you will need to get it from an archive as follows.
 
 ``` R
 install.packages("http://ascopa.server4you.net/ubuntu/ubuntu/pool/universe/r/r-cran-rniftilib/r-cran-rniftilib_0.0-35.r79.orig.tar.xz", repos=NULL)
